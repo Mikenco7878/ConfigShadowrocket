@@ -1,0 +1,7 @@
+#!name=Camscanner
+#!desc=Camscanner
+[Script]
+Camscanner=type=http-response,pattern=https:\/\/(api|api-cs.*)\.intsig\.net\/purchase\/cs\/query_prop,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/camscanner.js
+
+[MITM]
+hostname = %APPEND%, ap*.intsig.net
