@@ -1,0 +1,10 @@
+#!name=FainTV
+#!desc=FainTV
+
+[Script]
+
+FainTV=type=http-response,pattern=^http:\/\/ftvn\.hawsing\.com\.tw:3000\/client\/login,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/fatv.js
+
+[MITM]
+
+hostname = %APPEND% ftvn.hawsing.com
