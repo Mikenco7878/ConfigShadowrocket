@@ -1,0 +1,8 @@
+#!name=iScreen
+#!desc=iScreen
+[Script]
+iScreenn=type=http-response,pattern=^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt$,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/iScreenn.js
+
+
+[MITM]
+hostname = %APPEND% buy.itunes.apple.com
