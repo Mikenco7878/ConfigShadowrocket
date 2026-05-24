@@ -1,0 +1,9 @@
+#!name=icon Killer
+#!desc=icon Killer Mở Khóa thành Viên
+
+[Script]
+icon Killer=type=http-response,pattern=^http[s]?:\/\/api.yonekura.cn\/3.6.8\/uicommon\/getuser,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/lcon.js
+
+
+[MITM] 
+hostname = %APPEND% api.yonekura.cn
