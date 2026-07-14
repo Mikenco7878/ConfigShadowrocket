@@ -1,0 +1,8 @@
+# !name=iScreen
+# !desc=iScreen
+
+[Script]
+iScreenn = type=http-response,pattern=^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt$,requires-body=1,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/iScreenn.js
+
+[MITM]
+hostname = %APPEND% buy.itunes.apple.com

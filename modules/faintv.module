@@ -1,0 +1,8 @@
+# !name=FainTV
+# !desc=FainTV
+
+[Script]
+FainTV = type=http-response,pattern=^http:\/\/ftvn\.hawsing\.com\.tw:3000\/client\/login,requires-body=1,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/fatv.js
+
+[MITM]
+hostname = %APPEND% ftvn.hawsing.com

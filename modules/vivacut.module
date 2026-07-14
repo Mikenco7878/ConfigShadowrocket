@@ -1,0 +1,8 @@
+# !name=Vivacut
+# !desc=Vivacut Pro
+
+[Script]
+Vivacut = type=http-response,pattern=^https:\/\/medi\.dxzzy321\.top\/api\/rest\/commerce\/integrate\/vip\/perform,requires-body=1,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/vivacut.js
+
+[MITM]
+hostname = %APPEND% medi.dxzzy321.top

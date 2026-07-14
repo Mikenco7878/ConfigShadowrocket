@@ -1,0 +1,8 @@
+# !name=Camscanner
+# !desc=Camscanner
+
+[Script]
+Camscanner = type=http-response,pattern=https:\/\/(api|api-cs.*)\.intsig\.net\/purchase\/cs\/query_prop,requires-body=1,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/camscanner.js
+
+[MITM]
+hostname = %APPEND%, ap*.intsig.net

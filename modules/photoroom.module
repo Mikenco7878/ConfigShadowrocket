@@ -1,0 +1,8 @@
+# !name=PhotoRoom
+# !desc=PhotoRoom Unlock
+
+[Script]
+PhotoRoom = type=http-response,pattern=^https?:\/\/api\.revenuecat\.com\/v1\/(subscribers\/[^\/]+$|receipts$),requires-body=1,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/PhotoRoom.js
+
+[MITM]
+hostname = %APPEND% api.revenuecat.com
