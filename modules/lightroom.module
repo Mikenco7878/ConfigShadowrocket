@@ -1,0 +1,13 @@
+#!name=LightRoom
+#!desc=Adobe LightRoom Unlock
+
+
+[MITM]
+
+hostname = %APPEND% photos.adobe.io
+
+
+
+[Script]
+
+LightRoom=type=http-response,pattern=^https:\/\/photos\.adobe\.io\/v2\/accounts*,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/lightroom.js

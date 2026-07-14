@@ -1,8 +1,0 @@
-#!name=Wink
-#!desc=Wink Pro
-[Script]
-WinkForeverVipCrack.js=type=http-response,pattern=^https?:\/\/api-sub\.meitu\.com\/v2\/user\/vip_info_by_group\.json,requires-body=1,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/WinkForeverVipCrack.js
-
-
-[MITM]
-hostname = %APPEND% api-sub.meitu.com

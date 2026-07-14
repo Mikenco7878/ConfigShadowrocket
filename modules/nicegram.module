@@ -1,0 +1,12 @@
+#!name=Nicegram Pro
+
+#!desc=Nicegram Pro
+
+[Script]
+
+Nicegram会员=type=http-request,pattern=^https?:\/\/restore-access\.indream\.app\/restoreAccess\?id=\w+$,requires-body=0,max-size=0,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/Nicegram.js,script-update-interval=0
+
+[MITM]
+
+hostname= %APPEND% restore-access.indream.app
+

@@ -1,0 +1,8 @@
+#!name=Locket
+#!desc=Locket
+[Script]
+revenuecat=type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts$|subscribers\/[^/]+$),requires-body=true,max-size=-1,timeout=60,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/revenuecat.js
+
+deleteHeader = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers),script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/deleteHeader.js,timeout=60
+[MITM]
+hostname = %APPEND% api.revenuecat.com

@@ -1,0 +1,13 @@
+#!name=Picsart
+
+#!desc=picsart pro
+
+[Script]
+
+Picsart=type=http-response,pattern=https:\/\/api\.(picsart|meiease)\.c(n|om)\/users\/show\/me\.json,requires-body=1,max-size=0,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/PicsArt.js
+
+
+
+[MITM]
+
+hostname = %APPEND% api.picsart.c*, api.meiease.c*
