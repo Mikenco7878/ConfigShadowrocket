@@ -1,4 +1,4 @@
-var banhsbao = JSON.parse($response.body);
+var mkc = JSON.parse($response.body);
 const vipa = '/purchase/cs/query_property';
 const vipb = '/queryProperty';
 const tqzx = '/getPrivilegeItem';
@@ -38,24 +38,24 @@ const vip = {
 };
 
 if ($request.url.indexOf(vipa) != -1){
-    banhsbao.data["psnl_vip_property"] = (vip);
-    banhsbao.data["fax_balance"] = "99999";
-    banhsbao.data["used_points"] = "99999";
-    banhsbao.data["points"] = "99999";
-    banhsbao.data["pdfword_balance"] = "100010";
-    banhsbao.data["bookmode_balance"] = 100010;
-    banhsbao.data["immt_expy_points"] = "99999";
-    banhsbao.data["ocr_balance"] = 99999;
-    banhsbao.data["no_login_ocr_balance"] = "99999";
-    banhsbao.data["CamScanner_RoadMap"] = 100000;
+    mkc.data["psnl_vip_property"] = (vip);
+    mkc.data["fax_balance"] = "99999";
+    mkc.data["used_points"] = "99999";
+    mkc.data["points"] = "99999";
+    mkc.data["pdfword_balance"] = "100010";
+    mkc.data["bookmode_balance"] = 100010;
+    mkc.data["immt_expy_points"] = "99999";
+    mkc.data["ocr_balance"] = 99999;
+    mkc.data["no_login_ocr_balance"] = "99999";
+    mkc.data["CamScanner_RoadMap"] = 100000;
 }
 
 if ($request.url.indexOf(vipb) != -1){
-    banhsbao.data.ar_property["psnl_vip_property"] = (vip);
+    mkc.data.ar_property["psnl_vip_property"] = (vip);
 }
 
 if ($request.url.indexOf(tqzx) != -1){
-    banhsbao.data.data = {
+    mkc.data.data = {
         "document" : [
             {
                 "balance" : -1,
@@ -173,4 +173,4 @@ if ($request.url.indexOf(tqzx) != -1){
     };
 }
 
-$done({body : JSON.stringify(banhsbao)});
+$done({body : JSON.stringify(mkc)});
