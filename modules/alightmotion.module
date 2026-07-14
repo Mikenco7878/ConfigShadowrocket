@@ -1,7 +1,0 @@
-#!name=AlightMotion
-#!desc=AlightMotion
-[Script]
-AlightMotion=type=http-response,pattern=^https:\/\/us-central1-alight-creative\.cloudfunctions\.net\/getAccountStatusAndLicenses,requires-body=true,max-size=131072,timeout=10,script-path=https://gitlab.com/chienq895/module-ad-config/-/raw/main/AlightMotion.js
-
-[MITM]
-hostname = %APPEND%, us-central1-alight-creative.cloudfunctions.net
