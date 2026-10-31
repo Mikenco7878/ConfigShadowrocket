@@ -1,0 +1,18 @@
+[General]
+# Thêm hoặc chỉnh sửa user-agent tại đây nếu cần
+user-agent = Locket/1.0.0 (iPhone; iOS 26.3; Scale/3.00)
+
+[URL Rewrite]
+# Chuyển đổi các script dạng http-request/response sang mục Rewrite của Config profile
+
+# RevenueCat Response
+^https:\/\/api\.revenuecat\.com\/.+\/(receipts$|subscribers\/[^/]+$) url script-response-body https://raw.githubusercontent.com/NightmarketServer/Module-Shadowrocket-NMS/refs/heads/main/Module-Shadowrocket-NMS/Locket%20Gold/locketfix8.js
+
+# RevenueCat Request Header
+^https:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) url script-request-header https://raw.githubusercontent.com/NightmarketServer/Module-Shadowrocket-NMS/refs/heads/main/Module-Shadowrocket-NMS/Locket%20Gold/header7.js
+
+# Locket Firebase Remote Config
+^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/.+ url script-response-body https://raw.githubusercontent.com/NightmarketServer/Module-Shadowrocket-NMS/refs/heads/main/Module-Shadowrocket-NMS/Locket%20Gold/forceGold4.3.js
+
+[MITM]
+hostname = api.revenuecat.com, firebaseremoteconfig.googleapis.com
