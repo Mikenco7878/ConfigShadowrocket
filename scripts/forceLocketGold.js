@@ -231,6 +231,14 @@ if (ua.includes("Locket")) {
                 ]
             },
             {
+                section: "🦉Mikenco7878",
+                items: [
+                    { overlay_id: "caption:mkc_mkc7878_01", source: "remote", caption: { background: { colors: ["#F2B8CF", "#E8C8EE", "#D7C9F5"] }, icon: { data: "😎", type: "emoji" }, max_lines: 1, text: "Locket 30s vĩnh viễn có mic", text_color: "#69465F", type: "static_content" } },
+                    { overlay_id: "caption:mkc_mkc7878_02", source: "remote", caption: { background: { colors: ["#F0B5CB", "#F6D0DF", "#DCCAF0"] }, icon: { data: "🥺", type: "emoji" }, max_lines: 1, text: "LamDien", text_color: "#70445A", type: "static_content" } },
+                    { overlay_id: "caption:mkc_mkc7878_03", source: "remote", caption: { background: { colors: ["#F4BFD3", "#F9D9CF", "#DCCDF5"] }, icon: { data: "💗", type: "emoji" }, max_lines: 1, text: "Mikenco7878", text_color: "#70465F", type: "static_content" } },
+                        ]
+            },
+            {
                 section: "🎨Holiday",
                 items: [
                     // 11/11/2026 - Ngày Độc thân
