@@ -1,0 +1,17 @@
+{
+  "files.associations": {
+    "*.module": "ini",
+    "*.sgmodule": "ini"
+  },
+  "[ini]": {
+    "editor.defaultFormatter": "Leezgion.vscode-ini",
+    "editor.formatOnSave": false
+  },
+  "ini.format.insertSpaces": true,
+  "ini.format.alignValues": false,
+  "ini.format.sectionSpacing": 1,
+  "ini.format.sortSections": false,
+  "ini.format.sortKeys": false,
+  "ini.format.preserveDelimiters": true,
+  "ini.parse.inlineCommentMode": "none"
+}
