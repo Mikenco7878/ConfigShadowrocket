@@ -1,38 +1,21 @@
-
-// ============================================================
-// Locket Remote Config Rewrite
+// Locket Remote Config 
 // Endpoint: firebaseremoteconfig.googleapis.com
-// Update: 03/11/2026
+// Update: 20:20 03/11/2026
 
 var ua = $request.headers["User-Agent"] || $request.headers["user-agent"] || "";
 var obj = JSON.parse($response.body);
 
-if (obj && obj.entries && typeof obj.entries === "object") {
+if (ua.includes("Locket")) {
   obj.Attention = "Hi! Please do not sell or share this with others!";
   obj.entries = obj.entries || {};
 
-  // Preserve existing Remote Config feature gates before applying overrides.
- 
-var originalFeatureGates = {};
-try {
-    var rawGates = obj.entries.feature_gates;
-    var parsedGates = typeof rawGates === "string"
-        ? JSON.parse(rawGates || "{}")
-        : rawGates;
-
-    if (parsedGates && typeof parsedGates === "object" && !Array.isArray(parsedGates)) {
-        originalFeatureGates = parsedGates;
-    }
-} catch (e) {}
-
-
     // 1. GOLD CONFIGURATION, FEATURE GATES & PAYWALL
     Object.assign(obj.entries, {
-        feature_gates: JSON.stringify(Object.assign({}, originalFeatureGates, {
+        feature_gates: JSON.stringify({
             app_icon_picker: "enabled", camera_roll: "enabled", camera_theme: "enabled", locket_views: "enabled",
             long_captions: "enabled", longer_video: "enabled", unlimited_friends: "enabled", priority_support: "enabled",
             profile_badge: "enabled", remove_ads: "enabled", video: "enabled", custom_widget_frames: "enabled", streak_recovery: "enabled"
-        })),
+        }),
         upsell_features: JSON.stringify({
             app_icon_picker: true, camera_roll: true, camera_theme: true,
             locket_views: true, remove_ads: true, custom_widget_frames: true
@@ -77,7 +60,7 @@ try {
             camera_roll_max_duration: 30.0, quality_mbps: 0.9, qualityMbps: 0.9, flash_button: true
         }),
         live_photos: JSON.stringify({ capture: true, viewing: true, catch_up: true, widget_looping_mode: "never" }),
-        camera_filter_config: JSON.stringify(Object.assign({}, originalCameraFilterConfig, {
+        camera_filter_config: JSON.stringify({
             allows_custom_filters: true, show_filter_button: true, sheet_enabled: true, open_sheet_immediately: true,
             sheet_filters: [
                 { title: { en: "Goofy" }, filter_ids: ["okay_wig", "influencer", "looks_maxxing", "toothless", "bye_brows"] },
@@ -96,7 +79,7 @@ try {
                 "easter_bunney_cutout", "easter_chick_cutout", "bearded", "leprechaun",
                 "lucky_face", "sweet_hearts", "elf_cutout", "santa_cutout", "frosty"
             ]
-        })),
+        }),
         camera_roll_preview_enabled: "true", camera_roll_video_enabled: "true",
         camera_roll_video_upload_enabled: "true", internal_camera_roll_video_upload_enabled: "true",
         longer_camera_roll_videos_enabled: "true",
@@ -250,7 +233,7 @@ try {
                 section: "🦉Mikenco7878",
                 items: [
                     { overlay_id: "caption:mkc_mkc7878_01", source: "remote", caption: { background: { colors: ["#F2B8CF", "#E8C8EE", "#D7C9F5"] }, icon: { data: "😎", type: "emoji" }, max_lines: 1, text: "Locket 30s vĩnh viễn có mic", text_color: "#69465F", type: "static_content" } },
-                    { overlay_id: "caption:mkc_mkc7878_02", source: "remote", caption: { background: { colors: ["#F0B5CB", "#F6D0DF", "#DCCAF0"] }, icon: { data: "🦉", type: "emoji" }, max_lines: 1, text: "LamDien", text_color: "#70445A", type: "static_content" } },
+                    { overlay_id: "caption:mkc_mkc7878_02", source: "remote", caption: { background: { colors: ["#F0B5CB", "#F6D0DF", "#DCCAF0"] }, icon: { data: "🥺", type: "emoji" }, max_lines: 1, text: "LamDien", text_color: "#70445A", type: "static_content" } },
                     { overlay_id: "caption:mkc_mkc7878_03", source: "remote", caption: { background: { colors: ["#F4BFD3", "#F9D9CF", "#DCCDF5"] }, icon: { data: "💗", type: "emoji" }, max_lines: 1, text: "Mikenco7878", text_color: "#70465F", type: "static_content" } }
                 ]
             },
