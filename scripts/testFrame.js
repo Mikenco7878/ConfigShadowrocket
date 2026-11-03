@@ -152,38 +152,22 @@ if (ua.includes("Locket")) {
     
     // WIDGET FRAME LIBRARY
     var widgetFrames = {
-        bien: {
-            url: "https://i.postimg.cc/SNMBGkDg/Frame-Bien.png"
-        },
-        giang_sinh: {
-            url: "https://i.postimg.cc/65vkhtMx/Frame-Giang-Sinh.png"
-        },
-        love: {
-            url: "https://i.postimg.cc/5NChmbn7/Frame-Love.png"
-        },
-        sinh_nhat: {
-            url: "https://i.postimg.cc/m2HvSB86/Frame-Sinh-Nhat.png"
-        },
-        tet: {
-            url: "https://i.postimg.cc/TYDzcftx/Frame-Tet.png"
-        },
-        trung_thu: {
-            url: "https://i.postimg.cc/pXFwBRqc/Frame-Trung-Thu.png"
-        },
-        default: {
-            url: "https://i.postimg.cc/fbY7MGdR/hlw.png"
-        }
+        bien: "https://i.postimg.cc/SNMBGkDg/Frame-Bien.png",
+        giang_sinh: "https://i.postimg.cc/65vkhtMx/Frame-Giang-Sinh.png",
+        love: "https://i.postimg.cc/5NChmbn7/Frame-Love.png",
+        sinh_nhat: "https://i.postimg.cc/m2HvSB86/Frame-Sinh-Nhat.png",
+        tet: "https://i.postimg.cc/TYDzcftx/Frame-Tet.png",
+        trung_thu: "https://i.postimg.cc/pXFwBRqc/Frame-Trung-Thu.png"
     };
 
     var selectedFrameId =
         typeof $argument !== "undefined" && $argument
             ? String($argument).trim().toLowerCase()
-            : "default";
+            : "bien";
 
-    var selectedWidgetFrame =
-        Object.prototype.hasOwnProperty.call(widgetFrames, selectedFrameId)
-            ? widgetFrames[selectedFrameId]
-            : widgetFrames.default;
+    if (!Object.prototype.hasOwnProperty.call(widgetFrames, selectedFrameId)) {
+        selectedFrameId = "bien";
+    }
 
     // 6. WIDGET, NOTIFICATIONS & INTERFACE (JOURNAL / PROFILE)
     Object.assign(obj.entries, {
@@ -193,8 +177,8 @@ if (ua.includes("Locket")) {
         widget_sync_token_reload_mode: "clearTokenNever",
         
         widget_frame_event: JSON.stringify({
-            uid: "midautumn_2026",
-            url: selectedWidgetFrame.url,
+            uid: "custom_" + selectedFrameId,
+            url: widgetFrames[selectedFrameId],
             use_local_time_zone: true,
             placement: "below",
             start_at: "2020-01-01T00:00:00",
