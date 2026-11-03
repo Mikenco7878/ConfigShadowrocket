@@ -156,7 +156,7 @@ if (ua.includes("Locket")) {
         widget_stale_state_enabled: "false", widget_last_sent_indicator: "false",
         widget_sync_token_reload_mode: "clearTokenNever",
         widget_frame_event: JSON.stringify({
-            uid: "midautumn_2026", url: "https://i.postimg.cc/65vkhtMx/Frame-Giang-Sinh.png",
+            uid: "midautumn_2026", url: "https://i.postimg.cc/zBPCtLJZ/Frame-Giang-Sinh.png",
             use_local_time_zone: true, placement: "below",
             start_at: "2020-01-01T00:00:00", end_at: "2099-12-31T23:59:59"
         }),
