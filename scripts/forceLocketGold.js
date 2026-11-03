@@ -11,15 +11,19 @@ if (ua.includes("Locket")) {
   obj.entries = obj.entries || {};
 
   // Preserve existing Remote Config feature gates before applying overrides.
-  var originalFeatureGates = {};
-  try {
-      var parsedGates = typeof obj.entries.feature_gates === "string"
-          ? JSON.parse(obj.entries.feature_gates || "{}")
-          : obj.entries.feature_gates;
-      if (parsedGates && typeof parsedGates === "object" && !Array.isArray(parsedGates)) {
-          originalFeatureGates = parsedGates;
-      }
-  } catch (e) {}
+ 
+var originalCameraFilterConfig = {};
+try {
+    var rawFilterConfig = obj.entries.camera_filter_config;
+    var parsedFilterConfig = typeof rawFilterConfig === "string"
+        ? JSON.parse(rawFilterConfig || "{}")
+        : rawFilterConfig;
+
+    if (parsedFilterConfig && typeof parsedFilterConfig === "object" && !Array.isArray(parsedFilterConfig)) {
+        originalCameraFilterConfig = parsedFilterConfig;
+    }
+} catch (e) {}
+
 
     // 1. GOLD CONFIGURATION, FEATURE GATES & PAYWALL
     Object.assign(obj.entries, {
@@ -72,7 +76,7 @@ if (ua.includes("Locket")) {
             camera_roll_max_duration: 30.0, quality_mbps: 0.9, qualityMbps: 0.9, flash_button: true
         }),
         live_photos: JSON.stringify({ capture: true, viewing: true, catch_up: true, widget_looping_mode: "never" }),
-        camera_filter_config: JSON.stringify({
+        camera_filter_config: JSON.stringify(Object.assign({}, originalCameraFilterConfig, {
             allows_custom_filters: true, show_filter_button: true, sheet_enabled: true, open_sheet_immediately: true,
             sheet_filters: [
                 { title: { en: "Goofy" }, filter_ids: ["okay_wig", "influencer", "looks_maxxing", "toothless", "bye_brows"] },
@@ -91,7 +95,7 @@ if (ua.includes("Locket")) {
                 "easter_bunney_cutout", "easter_chick_cutout", "bearded", "leprechaun",
                 "lucky_face", "sweet_hearts", "elf_cutout", "santa_cutout", "frosty"
             ]
-        }),
+        })),
         camera_roll_preview_enabled: "true", camera_roll_video_enabled: "true",
         camera_roll_video_upload_enabled: "true", internal_camera_roll_video_upload_enabled: "true",
         longer_camera_roll_videos_enabled: "true",
