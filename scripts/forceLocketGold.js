@@ -6,21 +6,21 @@
 var ua = $request.headers["User-Agent"] || $request.headers["user-agent"] || "";
 var obj = JSON.parse($response.body);
 
-if (ua.includes("Locket")) {
+if (obj && obj.entries && typeof obj.entries === "object") {
   obj.Attention = "Hi! Please do not sell or share this with others!";
   obj.entries = obj.entries || {};
 
   // Preserve existing Remote Config feature gates before applying overrides.
  
-var originalCameraFilterConfig = {};
+var originalFeatureGates = {};
 try {
-    var rawFilterConfig = obj.entries.camera_filter_config;
-    var parsedFilterConfig = typeof rawFilterConfig === "string"
-        ? JSON.parse(rawFilterConfig || "{}")
-        : rawFilterConfig;
+    var rawGates = obj.entries.feature_gates;
+    var parsedGates = typeof rawGates === "string"
+        ? JSON.parse(rawGates || "{}")
+        : rawGates;
 
-    if (parsedFilterConfig && typeof parsedFilterConfig === "object" && !Array.isArray(parsedFilterConfig)) {
-        originalCameraFilterConfig = parsedFilterConfig;
+    if (parsedGates && typeof parsedGates === "object" && !Array.isArray(parsedGates)) {
+        originalFeatureGates = parsedGates;
     }
 } catch (e) {}
 
