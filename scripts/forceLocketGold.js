@@ -1,3 +1,4 @@
+
 // ============================================================
 // Locket Remote Config Rewrite
 // Endpoint: firebaseremoteconfig.googleapis.com
@@ -9,14 +10,24 @@ if (ua.includes("Locket")) {
   obj.Attention = "Hi! Please do not sell or share this with others!";
   obj.entries = obj.entries || {};
 
-  
+  // Preserve existing Remote Config feature gates before applying overrides.
+  var originalFeatureGates = {};
+  try {
+      var parsedGates = typeof obj.entries.feature_gates === "string"
+          ? JSON.parse(obj.entries.feature_gates || "{}")
+          : obj.entries.feature_gates;
+      if (parsedGates && typeof parsedGates === "object" && !Array.isArray(parsedGates)) {
+          originalFeatureGates = parsedGates;
+      }
+  } catch (e) {}
+
     // 1. GOLD CONFIGURATION, FEATURE GATES & PAYWALL
     Object.assign(obj.entries, {
-        feature_gates: JSON.stringify({
+        feature_gates: JSON.stringify(Object.assign({}, originalFeatureGates, {
             app_icon_picker: "enabled", camera_roll: "enabled", camera_theme: "enabled", locket_views: "enabled",
             long_captions: "enabled", longer_video: "enabled", unlimited_friends: "enabled", priority_support: "enabled",
             profile_badge: "enabled", remove_ads: "enabled", video: "enabled", custom_widget_frames: "enabled", streak_recovery: "enabled"
-        }),
+        })),
         upsell_features: JSON.stringify({
             app_icon_picker: true, camera_roll: true, camera_theme: true,
             locket_views: true, remove_ads: true, custom_widget_frames: true
@@ -199,7 +210,7 @@ if (ua.includes("Locket")) {
         onboarding_contact_permission_step: "true"
     });
 
-  // 8. OVERLAY & CUSTOM CAPTIONS
+    // 8. OVERLAY & CUSTOM CAPTIONS
     Object.assign(obj.entries, {
         overlay_navigator_enabled: "true",
         overlays_v2_config: JSON.stringify({ suggestions_enabled: true }),
@@ -235,8 +246,8 @@ if (ua.includes("Locket")) {
                 items: [
                     { overlay_id: "caption:mkc_mkc7878_01", source: "remote", caption: { background: { colors: ["#F2B8CF", "#E8C8EE", "#D7C9F5"] }, icon: { data: "😎", type: "emoji" }, max_lines: 1, text: "Locket 30s vĩnh viễn có mic", text_color: "#69465F", type: "static_content" } },
                     { overlay_id: "caption:mkc_mkc7878_02", source: "remote", caption: { background: { colors: ["#F0B5CB", "#F6D0DF", "#DCCAF0"] }, icon: { data: "🥺", type: "emoji" }, max_lines: 1, text: "LamDien", text_color: "#70445A", type: "static_content" } },
-                    { overlay_id: "caption:mkc_mkc7878_03", source: "remote", caption: { background: { colors: ["#F4BFD3", "#F9D9CF", "#DCCDF5"] }, icon: { data: "💗", type: "emoji" }, max_lines: 1, text: "Mikenco7878", text_color: "#70465F", type: "static_content" } },
-                        ]
+                    { overlay_id: "caption:mkc_mkc7878_03", source: "remote", caption: { background: { colors: ["#F4BFD3", "#F9D9CF", "#DCCDF5"] }, icon: { data: "💗", type: "emoji" }, max_lines: 1, text: "Mikenco7878", text_color: "#70465F", type: "static_content" } }
+                ]
             },
             {
                 section: "🎨Holiday",
@@ -401,6 +412,6 @@ if (ua.includes("Locket")) {
             }
         ])
     });
-    }
+}
 
 $done({ body: JSON.stringify(obj) });
