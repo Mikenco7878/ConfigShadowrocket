@@ -156,9 +156,12 @@ if (ua.includes("Locket")) {
         widget_stale_state_enabled: "false", widget_last_sent_indicator: "false",
         widget_sync_token_reload_mode: "clearTokenNever",
         widget_frame_event: JSON.stringify({
-            uid: "midautumn_2026", url: "https://i.postimg.cc/zBPCtLJZ/Frame-Giang-Sinh.png",
-            use_local_time_zone: true, placement: "below",
-            start_at: "2020-01-01T00:00:00", end_at: "2099-12-31T23:59:59"
+            uid: "christmas_frame_20261104_v2",
+            url: "https://i.postimg.cc/zBPCtLJZ/Frame-Giang-Sinh.png",
+            use_local_time_zone: true,
+            placement: "below",
+            start_at: "2020-01-01T00:00:00",
+            end_at: "2099-12-31T23:59:59"
         }),
         live_activity_onboarding: "true", live_activity_onboarding_variant: "friending",
         register_live_activity_push_to_start_token: "true", live_activity_remove_stale_start_token: "true",
