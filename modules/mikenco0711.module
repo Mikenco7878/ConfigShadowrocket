@@ -1,7 +1,7 @@
 #!name=Locket Gold new version
 #!desc=Locket, Youtube, Spotify, SoundCloud
 # Author: Mikenco7878
-# Updated: 15:15 03-11-2026
+# Updated: 20:20 03-11-2026
 
 [General]
 private-ip-answer = true
@@ -27,7 +27,7 @@ AND,((DOMAIN,youtubei.googleapis.com),(PROTOCOL,UDP)),REJECT
 # YouTube Rewrites
 (^https?:\/\/[\w-]+\.googlevideo\.com\/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
 ^https?:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad _ reject-200
-^https?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads _ reject-200
+^h  ttps?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads _ reject-200
 ^https?:\/\/(www|s)\.youtube\.com\/(pagead|ptracking) _ reject-200
 ^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?adcontext _ reject-200
 

@@ -30,9 +30,9 @@ var mute = {
   },
   locketGold = {
     grace_period_expires_date: null,
-    purchase_date: "2026-05-05T07:11:00Z",
+    purchase_date: "2026-11-03T07:11:00Z",
     product_identifier: "locket_1600_1y",
-    expires_date: "9999-05-05T07:11:00Z",
+    expires_date: "9999-11-03T07:11:00Z",
   };
 const match = Object.keys(mapping).find((e) => ua.includes(e));
 if (match) {
