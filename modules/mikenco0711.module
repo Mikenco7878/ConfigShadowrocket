@@ -57,4 +57,4 @@ locket_rc = type=http-response, pattern=^https:\/\/firebaseremoteconfig\.googlea
 
 [MITM]
 enable = true
-hostname = %APPEND% redirector*.googlevideo.com, *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com, spclient.wg.spotify.com, *spclient.spotify.com, api-mobile.soundcloud.com, api.revenuecat.com, firebaseremoteconfig.googleapis.com
+hostname = %APPEND% redirector*.googlevideo.com, *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com, spclient.wg.spotify.com, *spclient.spotify.com, api-mobile.soundcloud.com, api.revenuecat.com, firebaseremoteconfig.googleapis.com, us-central1-locket-4252a.cloudfunctions.net
