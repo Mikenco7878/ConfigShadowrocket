@@ -2,10 +2,20 @@
 // Endpoint: firebaseremoteconfig.googleapis.com
 // Update: 20:20 03/11/2026
 
-var ua = $request.headers["User-Agent"] || $request.headers["user-agent"] || "";
+(function () {
+var result = {};
+try {
+var headers = $request.headers || {};
+var uaKey = Object.keys(headers).find(function (key) { return key.toLowerCase() === "user-agent"; });
+var ua = uaKey ? headers[uaKey] : "";
+if (typeof ua === "string" && /\bLocket(?:\/|\b)/i.test(ua)) {
 var obj = JSON.parse($response.body);
+if (!obj || typeof obj !== "object" || Array.isArray(obj) ||
+    (obj.entries !== undefined && (!obj.entries || typeof obj.entries !== "object" || Array.isArray(obj.entries)))) {
+    throw new Error("Unsupported Remote Config schema");
+}
+var originalEntries = Object.assign({}, obj.entries || {});
 
-if (ua.includes("Locket")) {
   obj.Attention = "Hi! Please do not sell or share this with others!";
   obj.entries = obj.entries || {};
 
@@ -425,6 +435,25 @@ if (ua.includes("Locket")) {
             }
         ])
     });
+// Preserve server fields absent from this clone, including new AI configuration.
+["camera", "camera_roll", "camera_filter_config"].forEach(function (key) {
+    var original;
+    try { original = JSON.parse(originalEntries[key]); } catch (error) { return; }
+    if (!original || typeof original !== "object" || Array.isArray(original)) return;
+    var configured = JSON.parse(obj.entries[key]);
+    if (key === "camera_filter_config") {
+        // Prefer the live catalog to hardcoded, potentially retired filter IDs.
+        ["picker_filters", "sheet_filters"].forEach(function (field) {
+            if (Array.isArray(original[field]) && original[field].length) configured[field] = original[field];
+        });
+    }
+    obj.entries[key] = JSON.stringify(Object.assign({}, original, configured));
+});
+result = { body: JSON.stringify(obj) };
 }
-
-$done({ body: JSON.stringify(obj) });
+} catch (error) {
+    // Keep the original response on empty, malformed or unsupported data.
+    result = {};
+}
+$done(result);
+})();
