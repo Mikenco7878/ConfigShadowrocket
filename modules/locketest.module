@@ -1,4 +1,5 @@
 #!name=Locket Test
+# Updated: 02:00 11/11/2026 (UTC+7)
 #!arguments=widgetFrame:bien
 #!arguments-desc=Widget Frame: bien, giang_sinh, love, sinh_nhat, tet, trung_thu, default
 #!desc=Cau hinh Locket qua testFrame va chan doan profile/tao anh; khong thay the backend AI.

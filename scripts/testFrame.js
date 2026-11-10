@@ -1,6 +1,6 @@
 // Locket Remote Config 
 // Endpoint: firebaseremoteconfig.googleapis.com
-// Update: 20:20 03/11/2026
+// Updated: 02:00 11/11/2026 (UTC+7)
 
 (function () {
 var result = {};
