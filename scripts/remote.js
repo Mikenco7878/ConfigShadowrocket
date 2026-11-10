@@ -1,4 +1,4 @@
-// Updated: 02:31 11/11/2026 (UTC+7)
+// Updated: 02:48 11/11/2026 (UTC+7)
 // Locket test hooks. No entitlement changes, image redirects or body inspection.
 // The server remains responsible for filter availability and AI generation.
 (function () {
@@ -6,7 +6,7 @@
   function diagnostic(message) {
     try {
       if (typeof console !== "undefined" && typeof console.log === "function") {
-        console.log("[locketest] build=20261111_0231 " + message);
+        console.log("[locketest] build=20261111_0248 " + message);
       }
     } catch (error) {}
   }
