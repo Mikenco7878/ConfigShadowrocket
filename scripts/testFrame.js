@@ -1,19 +1,42 @@
 // Locket Remote Config 
 // Endpoint: firebaseremoteconfig.googleapis.com
-// Updated: 02:00 11/11/2026 (UTC+7)
+// Updated: 02:31 11/11/2026 (UTC+7)
 
 (function () {
 var result = {};
+var phase = "metadata";
+function diagnostic(message) {
+    try {
+        if (typeof console !== "undefined" && typeof console.log === "function") {
+            console.log("[locketest] build=20261111_0231 remote-config " + message);
+        }
+    } catch (error) {}
+}
+diagnostic("response-hook");
 try {
+var projectMatch = /^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/(locket-4252a|[0-9]+)\/namespaces\/firebase:fetch(?:\?[^#]*)?$/.exec($request.url || "");
 var headers = $request.headers || {};
 var uaKey = Object.keys(headers).find(function (key) { return key.toLowerCase() === "user-agent"; });
 var ua = uaKey ? headers[uaKey] : "";
-if (typeof ua === "string" && /\bLocket(?:\/|\b)/i.test(ua)) {
+// A known project identifies Locket without depending on the SDK's User-Agent.
+// Numeric project IDs are shared infrastructure; require Locket identity there.
+var identified = projectMatch && (projectMatch[1] === "locket-4252a" ||
+    (typeof ua === "string" && /\bLocket(?:\/|\b)/i.test(ua)));
+var statusMatch = /^(?:HTTP\/\d(?:\.\d)?\s+)?([1-5]\d{2})(?:\s|$)/.exec(String($response.statusCode || $response.status || ""));
+diagnostic("status=" + (statusMatch ? statusMatch[1] : "unknown"));
+if (!identified) {
+    diagnostic("skipped=identity");
+} else if (statusMatch && statusMatch[1] !== "200") {
+    diagnostic("skipped=http-status");
+} else {
+phase = "json";
 var obj = JSON.parse($response.body);
+phase = "schema";
 if (!obj || typeof obj !== "object" || Array.isArray(obj) ||
-    (obj.entries !== undefined && (!obj.entries || typeof obj.entries !== "object" || Array.isArray(obj.entries)))) {
+    !obj.entries || typeof obj.entries !== "object" || Array.isArray(obj.entries)) {
     throw new Error("Unsupported Remote Config schema");
 }
+phase = "configuration";
 var originalEntries = Object.assign({}, obj.entries || {});
 
   obj.Attention = "Hi! Please do not sell or share this with others!";
@@ -35,7 +58,7 @@ var originalEntries = Object.assign({}, obj.entries || {});
             on_foreground: false, interval: 2592000, profile_banner: true
         }),
         feature_discovery_popup_config: JSON.stringify({
-            tag: "LOCKET GOLD MKC", tag_gradient: true, tag_style: "gold_gradient", title: "Activated 💛",
+            tag: "LOCKET TEST", tag_gradient: true, tag_style: "gold_gradient", title: "Config updated",
             feature_set: [
                 { title: "Mikenco7878 🦉", body: "🔔Contact Zalo: 0789547878 for the best support🔔", imageURL: "https://i.postimg.cc/rVprsBtm/Dac-Vu-Cu-MKC.png" }
             ],
@@ -450,10 +473,12 @@ var originalEntries = Object.assign({}, obj.entries || {});
     obj.entries[key] = JSON.stringify(Object.assign({}, original, configured));
 });
 result = { body: JSON.stringify(obj) };
+diagnostic("applied captions=true video-config=30s filters=true");
 }
 } catch (error) {
     // Keep the original response on empty, malformed or unsupported data.
     result = {};
+    diagnostic("skipped=" + phase + "-error");
 }
 $done(result);
 })();

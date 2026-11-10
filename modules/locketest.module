@@ -1,5 +1,5 @@
 #!name=Locket Test
-# Updated: 02:08 11/11/2026 (UTC+7)
+# Updated: 02:31 11/11/2026 (UTC+7)
 #!arguments=widgetFrame:bien
 #!arguments-desc=Widget Frame: bien, giang_sinh, love, sinh_nhat, tet, trung_thu, default
 #!desc=Cau hinh Locket qua testFrame va chan doan profile/tao anh; khong thay the backend AI.
@@ -7,12 +7,13 @@
 # Run separately from update.module and other Locket hooks.
 # Raw script must be published before importing this module from GitHub.
 # Only Remote Config buffers and modifies JSON; image/profile bodies stay unchanged.
+# Numeric Firebase projects require a Locket User-Agent before any modification.
 
 [Script]
-locket_test_config_request = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=ce067bf
-locket_test_config_response = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/testFrame.js?v=ce067bf,argument={{{widgetFrame}}}
-locket_test_api_request = type=http-request,pattern=^https:\/\/(?:(?:api\.locketcamera\.com|us-central1-locket-4252a\.cloudfunctions\.net)\/generateFilteredImage|api\.locketcamera\.com\/changeProfileInfo)(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=ce067bf
-locket_test_api_response = type=http-response,pattern=^https:\/\/(?:(?:api\.locketcamera\.com|us-central1-locket-4252a\.cloudfunctions\.net)\/generateFilteredImage|api\.locketcamera\.com\/changeProfileInfo)(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=ce067bf
+locket_test_config_request = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/(?:locket-4252a|[0-9]+)\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=20261111_0231
+locket_test_config_response = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/(?:locket-4252a|[0-9]+)\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/testFrame.js?v=20261111_0231,argument={{{widgetFrame}}}
+locket_test_api_request = type=http-request,pattern=^https:\/\/(?:(?:api\.locketcamera\.com|us-central1-locket-4252a\.cloudfunctions\.net)\/generateFilteredImage|api\.locketcamera\.com\/changeProfileInfo)(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=20261111_0231
+locket_test_api_response = type=http-response,pattern=^https:\/\/(?:(?:api\.locketcamera\.com|us-central1-locket-4252a\.cloudfunctions\.net)\/generateFilteredImage|api\.locketcamera\.com\/changeProfileInfo)(?:\?[^#]*)?$,requires-body=false,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/scripts/remote.js?v=20261111_0231
 
 [MITM]
 hostname = %APPEND% firebaseremoteconfig.googleapis.com, api.locketcamera.com, us-central1-locket-4252a.cloudfunctions.net
