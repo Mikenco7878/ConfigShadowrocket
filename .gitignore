@@ -1,0 +1,7 @@
+# Không upload thư mục docs
+docs/
+
+# Không upload tất cả file Markdown
+*.md
+
+*.rm

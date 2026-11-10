@@ -1,0 +1,76 @@
+#!name=Locket VIP & YouTube Premium Combo (All-in-One)
+#!desc=Bản tối ưu toàn diện độc quyền bởi MinhHiep08: Tích hợp mở khóa Locket Gold (Anti-Cache 304), Full Bộ Lọc AI & Khung Photobooth, YouTube Premium (Chặn sạch quảng cáo, PiP chạy ngầm) & Spotify Eevee VIP.
+#!author=MinhHiep08 (@minhhiep07)
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png
+#!system=ios
+#!arguments=屏蔽上传按钮:false,屏蔽选段按钮:true,屏蔽Shorts按钮:false,字幕翻译语言:off,启用调试模式:false
+#!arguments-desc=- Ẩn nút Upload (+): [true, false] (Mặc định: false để giữ nút Upload)\n- Ẩn nút chọn đoạn nhạc: [true, false]\n- Ẩn nút Shorts: [true, false]\n- Dịch phụ đề: [vi, en, off]\n- Bật Debug: [true, false]
+
+[Rule]
+AND,((PROTOCOL,UDP),(DEST-PORT,443)),REJECT
+AND,((DOMAIN,firebaseremoteconfig.googleapis.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,api.revenuecat.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,api.locketcamera.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,locketcamera.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,us-central1-locket-4252a.cloudfunctions.net),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,spotify.com),(PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,spclient.wg.spotify.com),(PROTOCOL,UDP)),REJECT
+DOMAIN-SUFFIX,sentry.io,REJECT
+DOMAIN-SUFFIX,ingest.sentry.io,REJECT
+
+[URL Rewrite]
+^https?:\/\/(us-central1-locket-4252a\.cloudfunctions\.net|api\.locketcamera\.com)\/generateFilteredImage https://locket-mod-backend.onrender.com/generateFilteredImage 307
+
+[Header Rewrite]
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del x-revenuecat-etag
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del X-RevenueCat-ETag
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del if-none-match
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del If-None-Match
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del if-modified-since
+^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers) header-del If-Modified-Since
+
+^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+ header-del if-none-match
+^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+ header-del If-None-Match
+^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+ header-del if-modified-since
+^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+ header-del If-Modified-Since
+^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+ header-del x-goog-if-none-match
+
+^https?:\/\/api\.locketcamera\.com\/.+ header-del if-none-match
+^https?:\/\/api\.locketcamera\.com\/.+ header-del If-None-Match
+^https?:\/\/api\.locketcamera\.com\/.+ header-del if-modified-since
+^https?:\/\/api\.locketcamera\.com\/.+ header-del If-Modified-Since
+
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(user-customization-service\/v1\/customize|bootstrap\/v1\/bootstrap) header-del if-none-match
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(user-customization-service\/v1\/customize|bootstrap\/v1\/bootstrap) header-del If-None-Match
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(user-customization-service\/v1\/customize|bootstrap\/v1\/bootstrap) header-del if-modified-since
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(user-customization-service\/v1\/customize|bootstrap\/v1\/bootstrap) header-del If-Modified-Since
+
+[Script]
+# 1. YouTube Premium & SponsorBlock
+youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/(youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config))(\?(.*))?$,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://locket-vip.mhiep20077.workers.dev/js/youtube.response.js?v=20261108_44,argument="{"captionLang":"{{{字幕翻译语言}}}","blockUpload":{{{屏蔽上传按钮}}},"blockImmersive":{{{屏蔽选段按钮}}},"blockShorts":{{{屏蔽Shorts按钮}}},"debug":{{{启用调试模式}}}}"
+youtube.request.init = type=http-request,pattern=^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&ack.*,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://locket-vip.mhiep20077.workers.dev/js/youtube.request.js?v=20261108_44,argument="{"captionLang":"{{{字幕翻译语言}}}"}"
+youtube.request.log_event = type=http-request,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://locket-vip.mhiep20077.workers.dev/js/youtube.request.js?v=20261108_44
+
+# 2. Locket Gold & Anti-Cache 304
+deleteHeader_RC = type=http-request,pattern=^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers),script-path=https://locket-vip.mhiep20077.workers.dev/js/deleteHeader.js?v=20261108_44,timeout=60
+deleteHeader_Firebase = type=http-request,pattern=^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+,script-path=https://locket-vip.mhiep20077.workers.dev/js/deleteHeader.js?v=20261108_44,timeout=60
+
+revenuecat = type=http-response,pattern=^https?:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers),script-path=https://locket-vip.mhiep20077.workers.dev/js/Locket_minhhiep08.js?v=20261108_44,requires-body=true,max-size=-1,timeout=60
+locket_rc = type=http-response,pattern=^https?:\/\/firebaseremoteconfig\.googleapis\.com\/.+,script-path=https://locket-vip.mhiep20077.workers.dev/js/Locket_Unlocked.js?v=20261108_44,requires-body=true,max-size=-1,timeout=60
+
+# 3. Locket Photobooth & AI Filters
+locket_pb_req = type=http-request,pattern=^https?:\/\/(us-central1-locket-4252a\.cloudfunctions\.net|api\.locketcamera\.com)\/generateFilteredImage,script-path=https://locket-vip.mhiep20077.workers.dev/js/Locket_Photobooth.js?v=20261108_44,requires-body=true,max-size=-1,timeout=60
+
+# 4. Locket Profile & Filter Unblock
+locket_change_profile = type=http-request,pattern=^https:\/\/api\.locketcamera\.com\/changeProfileInfo,script-path=https://locket-vip.mhiep20077.workers.dev/js/locket_filter_unlock.js?v=20261108_44,timeout=60
+locket_filter_resp = type=http-response,pattern=^https?:\/\/api\.locketcamera\.com\/.+,requires-body=true,max-size=-1,script-path=https://locket-vip.mhiep20077.workers.dev/js/locket_filter_unlock.js?v=20261108_44,timeout=60
+
+# 5. Spotify Premium & Customization
+spotify-json = type=http-request,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(artistview\/v1\/artist|album-entity-view\/v2\/album)\/,requires-body=0,script-path=https://locket-vip.mhiep20077.workers.dev/js/spotify-json.js?v=20261108_44
+spotify-proto = type=http-response,pattern=^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(?::443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize),requires-body=1,binary-body-mode=1,max-size=0,script-path=https://locket-vip.mhiep20077.workers.dev/js/spotify-proto.js?v=20261108_44,script-update-interval=0
+
+[Host]
+firebaseremoteconfigrealtime.googleapis.com = 0.0.0.0
+
+[MITM]
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, api.revenuecat.com, firebaseremoteconfig.googleapis.com, spclient.wg.spotify.com, *spclient.spotify.com, api.locketcamera.com, *.locketcamera.com, us-central1-locket-4252a.cloudfunctions.net, locket-vip.mhiep20077.workers.dev, locket-mod-backend.onrender.com      
