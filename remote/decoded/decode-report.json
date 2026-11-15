@@ -1,0 +1,63 @@
+{
+  "purpose": "Local deobfuscation for inspection; original downloaded files retained",
+  "method": "Static AST transformations: custom Base64 string decoding, checksum-guided table rotation, constant folding, decoder removal and lexical binding renaming",
+  "privateToken": "Remains redacted; no real device request or credentials used",
+  "totalDecodedStringCalls": 30063,
+  "validation": {
+    "nodeSyntaxChecks": "4/4 PASS",
+    "originalInputHashes": "4/4 unchanged",
+    "differentialTests": "35/35 PASS",
+    "httpCalls": "In-memory mocks only; no live API calls",
+    "ios": "Not tested"
+  },
+  "files": [
+    {
+      "file": "deleteHeader.js",
+      "sourceSha256": "9edde420ea1fe7992fc8b37a7b0db878092b891b29c90c0c9c18a52e69ae4b6c",
+      "stringTableEntries": 30,
+      "rotation": 1,
+      "decodedCalls": 22,
+      "mapsRemoved": 0,
+      "renamedBindings": 1,
+      "outputBytes": 806,
+      "outputLines": 16,
+      "outputSha256": "bd9d4214bfa00a16fad2977eb4b41ed9df658394df58844baaeee2f4d8400b52"
+    },
+    {
+      "file": "Locket_minhhiep08.js",
+      "sourceSha256": "70efd0dc7395126e269056455c1c91dbf3f9667f2c19495da19416adf43f2a87",
+      "stringTableEntries": 147,
+      "rotation": 81,
+      "decodedCalls": 273,
+      "mapsRemoved": 2,
+      "renamedBindings": 8,
+      "outputBytes": 3672,
+      "outputLines": 74,
+      "outputSha256": "bc323a633c2e7f86decc857db9f7d58896e57bfdb3fb71a242deed199e6150d0"
+    },
+    {
+      "file": "locket_filter_unlock.js",
+      "sourceSha256": "dca5532f483858f8cb7148c8bcc8a29a6b68fd941fe8b6d9f053c1e357bd6211",
+      "stringTableEntries": 264,
+      "rotation": 146,
+      "decodedCalls": 610,
+      "mapsRemoved": 6,
+      "renamedBindings": 63,
+      "outputBytes": 15202,
+      "outputLines": 286,
+      "outputSha256": "cfdcdd79e200bcfe2ac67750040bade4d6331dfb0fe4ff2ce5f2ad069c87fc4a"
+    },
+    {
+      "file": "Locket_Unlocked.js",
+      "sourceSha256": "4ca4fe4de9a68bc6439a8780528b6ee1382c34c35700c0c3e6b303ac9c8683a5",
+      "stringTableEntries": 3705,
+      "rotation": 435,
+      "decodedCalls": 29158,
+      "mapsRemoved": 1,
+      "renamedBindings": 967,
+      "outputBytes": 389055,
+      "outputLines": 7929,
+      "outputSha256": "6da08bd52773444cad59c958b6ff5f0934fe39aa106f84db688437fa47fc7c9f"
+    }
+  ]
+}

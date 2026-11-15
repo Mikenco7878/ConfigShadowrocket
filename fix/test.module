@@ -1,10 +1,13 @@
-#!name=Locket Test (fix)
-#!desc=Module thử nghiệm 4 script trong fix/: chống cache, Remote Config và hiển thị filter. RevenueCat giữ nguyên dữ liệu server.
+#!name=Locket Test (decoded)
+#!desc=Module thử nghiệm 4 script giải mã trong remote/decoded/, giữ hành vi gốc. Có sửa dữ liệu thuê bao và gọi Worker; chưa xác nhận hoạt động trên iOS.
 
 # Based on the Locket hooks in modules/remoteLK.module.
-# Publish this module and all four fix/*.js files before importing the Raw URL.
+# Publish this module and all four remote/decoded/*.js files before importing the Raw URL.
 # Disable other Locket modules while testing: their URL patterns overlap.
-# Remote Config asset availability and iOS behavior have not been verified.
+# Decoded scripts preserve the original subscription and profile rewrites.
+# The filter script can send UID/username to its Worker and sync profiles with Authorization.
+# The personal asset token remains redacted; protected assets may not load.
+# No generateFilteredImage redirect is configured; AI generation has not been verified.
 
 [Rule]
 # Keep the three intercepted services on TCP so HTTPS hooks can run.
@@ -14,23 +17,23 @@ AND,((DOMAIN,api.locketcamera.com),(PROTOCOL,UDP)),REJECT
 
 [Script]
 # 1. REQUEST CACHE HEADERS
-fix_locket_cache_firebase = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/deleteHeader.js?v=20261112
-fix_locket_cache_revenuecat = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/v1\/(?:receipts|subscribers(?:\/[^/?#]+)?)(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/deleteHeader.js?v=20261112
-fix_locket_cache_api = type=http-request,pattern=^https:\/\/api\.locketcamera\.com\/(?!(?:generateFilteredImage|changeProfileInfo)(?:\?|$))[^/?#]+(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/deleteHeader.js?v=20261112
+fix_locket_cache_firebase = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/deleteHeader.js?v=20261112
+fix_locket_cache_revenuecat = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/v1\/(?:receipts|subscribers(?:\/[^/?#]+)?)(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/deleteHeader.js?v=20261112
+fix_locket_cache_api = type=http-request,pattern=^https:\/\/api\.locketcamera\.com\/(?!(?:generateFilteredImage|changeProfileInfo)(?:\?|$))[^/?#]+(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/deleteHeader.js?v=20261112
 
 # 2. REMOTE CONFIG
-# Match the project and endpoint accepted by Locket_Unlocked.js.
+# Keep this test scoped to the Locket Firebase project.
 # JSON response hooks use a finite 2 MiB input limit.
-fix_locket_remote_config = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/Locket_Unlocked.js?v=20261112
+fix_locket_remote_config = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/Locket_Unlocked.js?v=20261112
 
-# 3. SUBSCRIPTION RESPONSE
-# This script only calls $done({}); it does not need the response body.
-fix_locket_subscription = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/v1\/(?:receipts|subscribers(?:\/[^/?#]+)?)(?:\?[^#]*)?$,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/Locket_minhhiep08.js?v=20261112
+# 3. SUBSCRIPTION RESPONSE (ORIGINAL BEHAVIOR)
+# The decoded script rewrites subscriber data and status, requiring the JSON body.
+fix_locket_subscription = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/v1\/(?:receipts|subscribers(?:\/[^/?#]+)?)(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/Locket_minhhiep08.js?v=20261112
 
-# 4. FILTER PRESENTATION
-# Keep the original single-endpoint API scope; the script checks named filter collections.
-# Image generation and profile changes retain their original request/response flow.
-fix_locket_filter_response = type=http-response,pattern=^https:\/\/api\.locketcamera\.com\/(?!(?:generateFilteredImage|changeProfileInfo)(?:\?|$))[^/?#]+(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/fix/locket_filter_unlock.js?v=20261112
+# 4. FILTER & PROFILE RESPONSE (ORIGINAL BEHAVIOR)
+# The decoded response script uses identity, badge, HTTP and persistent-store logic.
+# Endpoint exclusions leave image generation and profile-change requests on their existing flow.
+fix_locket_filter_response = type=http-response,pattern=^https:\/\/api\.locketcamera\.com\/(?!(?:generateFilteredImage|changeProfileInfo)(?:\?|$))[^/?#]+(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/remote/decoded/locket_filter_unlock.js?v=20261112
 
 [MITM]
 hostname = %APPEND% firebaseremoteconfig.googleapis.com, api.revenuecat.com, api.locketcamera.com

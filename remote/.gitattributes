@@ -1,0 +1,2 @@
+# Preserve exact snapshot bytes for the SHA-256 audit across platforms.
+*.js -text
