@@ -5,6 +5,13 @@
 var result = {};
 var diagnosticState = "failed:request_context";
 var ptbMode = typeof $argument === "string" && /^ptb-(observe|register)$/.test($argument) ? $argument : "";
+var ptbDetails = { state: "not_evaluated", upstream_fields: [], catalog_item_fields: [] };
+var ptbCandidateInPicker = false;
+var ptbCandidateInSheet = false;
+
+function valueType(value) {
+  return value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
+}
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -30,6 +37,7 @@ function configurePhotobooth(originalText, configuredText) {
   try { original = JSON.parse(originalText); } catch (error) {}
   // Inspect the upstream value BEFORE this script supplies its own defaults.
   var supported = isRecord(original) && isIdList(original.picker_filters) && isGroupList(original.sheet_filters);
+  var id = "mkc_ptb_noel_4";
   var state = originalText === undefined ? "missing_upstream" : "unsupported_upstream";
   if (isRecord(original)) {
     // Preserve unknown catalog fields; never invent filters/remote_filters definitions.
@@ -53,7 +61,6 @@ function configurePhotobooth(originalText, configuredText) {
   if (supported) {
     state = "observed_list_shape";
     if (ptbMode === "ptb-register") {
-      var id = "mkc_ptb_noel_4";
       appendIds(configured.picker_filters, [id]);
       var title = "Photobooth MKC 📸";
       var group = configured.sheet_filters.filter(function (item) { return item.title.en === title; })[0];
@@ -63,11 +70,15 @@ function configurePhotobooth(originalText, configuredText) {
       state = "candidate_listed_client_support_unverified";
     }
   }
+  ptbCandidateInPicker = isIdList(configured.picker_filters) && configured.picker_filters.indexOf(id) !== -1;
+  ptbCandidateInSheet = isGroupList(configured.sheet_filters) && configured.sheet_filters.some(function (group) {
+    return group.filter_ids.indexOf(id) !== -1;
+  });
   if (ptbMode) {
     try {
       var known = ["allows_custom_filters", "show_filter_button", "sheet_enabled", "open_sheet_immediately", "sheet_filters", "picker_filters", "filters", "remote_filters", "filter_groups", "allowsCustomFilters", "showFilterButton", "sheetEnabled", "openSheetImmediately", "sheetFilters", "pickerFilters", "remoteFilters", "filterGroups"];
       var fields = isRecord(original) ? Object.keys(original).map(function (key) {
-        return { name: known.indexOf(key) !== -1 ? key : "<other>", type: Array.isArray(original[key]) ? "array" : typeof original[key] };
+        return { name: known.indexOf(key) !== -1 ? key : "<other>", type: valueType(original[key]) };
       }).slice(0, 32) : [];
       var catalogFields = [];
       ["filters", "remote_filters", "remoteFilters"].forEach(function (key) {
@@ -77,19 +88,41 @@ function configurePhotobooth(originalText, configuredText) {
         if (!isRecord(item)) return;
         var allowed = ["id", "filter_id", "title", "name", "thumbnail", "thumbnail_url", "thumbnailUrl", "image_url", "imageUrl", "url", "type", "source", "prompt", "config", "asset_url", "assetUrl"];
         catalogFields.push({ catalog: key, item_fields: Object.keys(item).slice(0, 32).map(function (field) {
-          return { name: allowed.indexOf(field) !== -1 ? field : "<other>", type: Array.isArray(item[field]) ? "array" : typeof item[field] };
+          return { name: allowed.indexOf(field) !== -1 ? field : "<other>", type: valueType(item[field]) };
         }) });
       });
-      console.log("[MKC-PTB-RC] " + JSON.stringify({ mode: ptbMode, state: state, upstream_fields: fields, catalog_item_fields: catalogFields }));
+      var firstGroup = isRecord(original) && Array.isArray(original.sheet_filters) ? original.sheet_filters[0] : null;
+      var groupFields = isRecord(firstGroup) ? Object.keys(firstGroup).slice(0, 16).map(function (field) {
+        return { name: ["title", "filter_ids", "filterIds", "id"].indexOf(field) !== -1 ? field : "<other>", type: valueType(firstGroup[field]) };
+      }) : [];
+      ptbDetails = {
+        state: state,
+        upstream_type: valueType(original),
+        upstream_fields: fields,
+        catalog_item_fields: catalogFields,
+        picker_id_list_valid: isRecord(original) && isIdList(original.picker_filters),
+        sheet_group_list_valid: isRecord(original) && isGroupList(original.sheet_filters),
+        first_sheet_group_fields: groupFields,
+        first_title_locales: isRecord(firstGroup) && isRecord(firstGroup.title) ? Object.keys(firstGroup.title).slice(0, 16).map(function (locale) {
+          return ["en", "vi", "en_US", "en-US"].indexOf(locale) !== -1 ? locale : "<other>";
+        }) : []
+      };
     } catch (error) {}
   }
   return isRecord(original) || originalText === undefined ? JSON.stringify(configured) : configuredText;
 }
 try {
 if (ptbMode && !/^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$/.test($request.url || "")) {
+  diagnosticState = "skipped:endpoint_scope";
   throw new Error("Outside PTB Remote Config scope");
 }
-var ua = $request.headers["User-Agent"] || $request.headers["user-agent"] || "";
+var requestHeaders = $request.headers || {};
+var ua = "";
+Object.keys(requestHeaders).some(function (key) {
+  if (key.toLowerCase() !== "user-agent" || typeof requestHeaders[key] !== "string") return false;
+  ua = requestHeaders[key];
+  return true;
+});
 diagnosticState = ua ? "skipped:non_locket" : "skipped:user_agent_missing";
 
 if (ua.includes("Locket")) {
@@ -619,6 +652,22 @@ if (ua.includes("Locket")) {
 }
 } catch (error) {
   // Preserve the original response when JSON or its schema is unsupported.
+}
+if (ptbMode) {
+  try {
+    var ptbStatusValue = typeof $response !== "undefined" && $response ? ($response.statusCode || $response.status || "") : "";
+    var ptbStatusMatch = /^(?:HTTP\/\d(?:\.\d)?\s+)?([1-5][0-9]{2})(?:\s|$)/.exec(String(ptbStatusValue));
+    var outputChanged = diagnosticState === "processed" && typeof result.body === "string";
+    console.log("[MKC-PTB-RC] " + JSON.stringify(Object.assign({
+      build: "20261123_m0_m1_02",
+      mode: ptbMode,
+      handler_state: diagnosticState,
+      http_status: ptbStatusMatch ? Number(ptbStatusMatch[1]) : null,
+      output_changed: outputChanged,
+      candidate_in_picker_output: outputChanged && ptbCandidateInPicker,
+      candidate_in_sheet_output: outputChanged && ptbCandidateInSheet
+    }, ptbDetails)));
+  } catch (error) {}
 }
 if (typeof $argument === "string" && $argument === "debug") {
   try {

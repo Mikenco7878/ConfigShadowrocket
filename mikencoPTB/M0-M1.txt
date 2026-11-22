@@ -2,7 +2,7 @@ Photobooth MKC — M0 + M1
 
 Nhánh local: `feat/mikenco-ptb-mvp`. Ngày chuẩn bị: 2026-11-23 (UTC+7).
 Phát hành theo yêu cầu người dùng trên nhánh feature; không push vào `main`.
-Build module/script URL: `20261123_m0_m1_01`. Mọi file triển khai nằm trong `mikencoPTB/`.
+Build module/script URL: `20261123_m0_m1_02`. Mọi file triển khai nằm trong `mikencoPTB/`.
 
 ## Trạng thái và bằng chứng
 
@@ -35,8 +35,9 @@ Không gọi endpoint tạo ảnh thật, không replay request và không dùng
 
 ## M0 hoạt động thế nào
 
-Một hook Remote Config duy nhất trong `modules/mkc.sgmodule` gọi script cũ đã sửa;
-không thêm hook RC cạnh tranh trong module debug ảnh.
+Một hook response Remote Config trong `modules/mkc.sgmodule` gọi script cũ đã sửa;
+request probe riêng chỉ ghi nhận fetch, không sửa request/cache header. Module debug
+ảnh không thêm hook RC cạnh tranh.
 
 1. Chỉ chế độ `ptb-observe`/`ptb-register` mới giới hạn URL vào đúng
    `https://firebaseremoteconfig.googleapis.com/v1/projects/locket-4252a/namespaces/firebase:fetch`
@@ -71,6 +72,33 @@ Nếu không có log RC: kiểm tra URL thực tế, User-Agent, HTTPS Decryptio
 Project dạng số, host/endpoint khác không được tự động mở rộng. Chỉ bổ sung sau
 khi xác nhận thuộc Locket bằng dữ liệu thực tế đã ẩn thông tin riêng.
 
+### Chẩn đoán khi Filter không có PTB — build 02
+
+Người dùng đã báo UI Filter chưa hiển thị PTB. Chưa có log từ máy để xác định
+nguyên nhân. Build 02 sửa việc không có log khi script bỏ qua vì User-Agent/JSON;
+đồng thời nhận header User-Agent không phân biệt hoa thường. Không tự thêm schema
+catalog hoặc coi việc nâng build là đã sửa được UI.
+
+Sau khi cập nhật module/script, mở lại Locket và chỉ copy các dòng:
+
+- `[MKC-PTB-RC-FETCH]`: request fetch đã đi qua pattern; có build và nhận diện UA
+  dạng nhãn, không có query, token hoặc giá trị header. Probe không ép app refresh.
+- `[MKC-PTB-RC]`: có `build`, `handler_state`, `http_status`, `output_changed`,
+  `candidate_in_picker_output`, `candidate_in_sheet_output`, cấu trúc upstream.
+
+Diễn giải:
+
+| Kết quả | Điều đã biết | Bước tiếp theo |
+| --- | --- | --- |
+| Không có cả hai dòng | Chưa có bằng chứng hook chạy | Kiểm tra tải script, MITM, hook trùng; chờ fetch thực sự. Không kết luận chỉ do cache |
+| Có FETCH nhưng chưa có RC | Request đã được thấy; response hook chưa được xác nhận | Kiểm tra log lỗi script, response/giới hạn body và module; chưa kết luận request thất bại |
+| `handler_state` là skipped/failed | Response không được script biến đổi | Đọc đúng nhãn lý do; không gửi body/UA/token thật |
+| `missing_upstream`/`unsupported_upstream` | Điều kiện schema để đăng ký chưa đạt | Gửi metadata field/kiểu; chưa đoán alias hoặc ghi đè catalog |
+| Hai cờ `candidate_in_*_output` true, UI vẫn không có | Response do script tạo có tham chiếu ID | Cần xác minh app activate config nào và cách client resolve catalog; chưa chứng minh client nhận ID mới |
+
+Các cờ output chỉ kiểm tra response mà script trả về, không đo được trạng thái
+config đã activate trong app. Cần kèm phiên bản Locket trong báo cáo.
+
 ## Asset Noel
 
 `assets/mkc_ptb_noel_4.thumbnail.png`: PNG 1254×1254, nền đục, bốn ô đen; tạo từ
@@ -90,13 +118,13 @@ Prompt đã dùng (không phải prompt runtime của Locket):
 Thêm/cập nhật hai URL này trong mục Module của Shadowrocket:
 
 ```text
-https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule?v=20261123_m0_m1_01
-https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module?v=20261123_m0_m1_01
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule?v=20261123_m0_m1_02
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module?v=20261123_m0_m1_02
 ```
 
 Nếu bản cũ lấy từ LAN, đổi nguồn sang Raw hoặc tắt bản LAN rồi thêm bản Raw;
 không bật hai bản base cùng lúc. Tải lại module và các script; kiểm tra comment
-`Build: 20261123_m0_m1_01` và script-path có query version tương ứng.
+`Build: 20261123_m0_m1_02` và script-path có query version tương ứng.
 Không cần giữ máy tính/server LAN sau khi đã cài từ Raw.
 
 Vẫn cần HTTPS Decryption, CA tin cậy và tắt hook trùng như hướng dẫn dưới.
@@ -133,7 +161,7 @@ ghi đè file và không upload lên GitHub.
    biệt các redirect 307 tới backend bên thứ ba có thể làm sai kết quả. Không dựa
    vào thứ tự giữa các module để quyết định script nào chạy.
 6. Kiểm tra tải script thành công từ LAN. Import một mình file module chưa đảm bảo
-   script đã được tải. Server chỉ phục vụ tám asset cho phép, không liệt kê thư mục.
+   script đã được tải. Server chỉ phục vụ chín asset cho phép, không liệt kê thư mục.
 
 Giữ Gold/RevenueCat/Captions trong base cũ; hai file RevenueCat/header không sửa.
 Không có kết luận rằng quyền lợi thuê bao hay toàn bộ tính năng hoạt động trên iOS.
@@ -168,7 +196,7 @@ Authorization, Cookie, signed URL, UID, session value, Filter ID value, ảnh/ba
 prompt hay thông báo lỗi server. Script luôn `$done({})` đúng một lần và không sửa
 request/response, không lưu persistent state, không gọi mạng.
 
-Chỉ copy dòng `[MKC-PTB-M1]` và `[MKC-PTB-RC]` vào báo cáo, không gửi toàn bộ log
+Chỉ copy dòng `[MKC-PTB-M1]`, `[MKC-PTB-RC]`, `[MKC-PTB-RC-FETCH]` vào báo cáo, không gửi toàn bộ log
 Shadowrocket. Probe JSON chỉ xuất tên field được allowlist, kiểu dữ liệu và đường
 dẫn lồng tối đa 4 tầng/96 field; field lạ thành `<other>`. Mảng chỉ xem phần tử đầu.
 Các nhánh ảnh/token/header/prompt được coi là opaque, không duyệt sâu.
@@ -251,10 +279,11 @@ Get-ChildItem scripts\*.js,tools\*.cjs,tests\*.cjs | ForEach-Object { node --che
 node --test tests/ptb.test.cjs
 ```
 
-Đã PASS 15 test Node.js: bảo toàn toàn bộ đầu ra ngoài filter bằng hash baseline,
+Đã PASS 18 test Node.js: bảo toàn toàn bộ đầu ra ngoài filter bằng hash baseline,
 hai script RevenueCat/header không đổi byte, merge catalog/ID/nhóm, idempotence,
 chế độ observe, schema sai/rỗng/JSON hỏng, URL match và không match, giới hạn body,
-ẩn dữ liệu trong log, sanitizer HAR, PNG/layout và tải script từ server localhost.
+ẩn dữ liệu trong log, sanitizer HAR, PNG/layout và tải script từ server localhost;
+thêm kiểm tra log ở mọi nhánh bỏ qua, header casing và request probe không sửa dữ liệu.
 Kiểm thử dùng dữ liệu giả, không dùng token/ảnh thật và không gọi API Locket.
 Chưa kiểm thử parser module, MITM, UI/filter/API hay X trên iPhone/Shadowrocket.
 

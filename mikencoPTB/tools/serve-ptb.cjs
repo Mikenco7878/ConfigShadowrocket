@@ -10,6 +10,7 @@ const files = new Map([
   ['scripts/revenuecat.js', 'application/javascript; charset=utf-8'],
   ['scripts/deleteHeader.js', 'application/javascript; charset=utf-8'],
   ['scripts/ptb_image_metadata.js', 'application/javascript; charset=utf-8'],
+  ['scripts/ptb_rc_fetch_metadata.js', 'application/javascript; charset=utf-8'],
   ['assets/mkc_ptb_noel_4.template.json', 'application/json; charset=utf-8'],
   ['assets/mkc_ptb_noel_4.thumbnail.png', 'image/png']
 ]);

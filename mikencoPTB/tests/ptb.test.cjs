@@ -99,6 +99,72 @@ test('Remote Config diagnostics mask catalog values and dynamic keys', () => {
   assert(text.includes('catalog_item_fields'));
 });
 
+test('RC diagnostics explain early exits without logging request or invalid JSON values', () => {
+  const cases = [
+    [{ url: rcUrl, headers: { 'User-Agent': 'Locket/SECRET_UA' } }, '{SECRET_JSON', 'failed:json_parse'],
+    [{ url: rcUrl, headers: { 'User-Agent': 'Locket/SECRET_UA' } }, '', 'failed:json_parse'],
+    [{ url: rcUrl, headers: { 'User-Agent': 'Locket/SECRET_UA' } }, '{"entries":[]}', 'skipped:unsupported_schema'],
+    [{ url: rcUrl, headers: {} }, '{"entries":{}}', 'skipped:user_agent_missing'],
+    [{ url: rcUrl, headers: { 'User-Agent': 'Other/SECRET_UA' } }, '{"entries":{}}', 'skipped:non_locket'],
+    [{ url: rcUrl + '/extra?key=SECRET_QUERY', headers: { 'User-Agent': 'Locket/SECRET_UA' } }, '{"entries":{}}', 'skipped:endpoint_scope']
+  ];
+  for (const [request, body, state] of cases) {
+    const { result, logs } = run('scripts/forceLocketGold.js', request, { body, status: 'HTTP/1.1 200 OK' }, 'ptb-register');
+    assert.deepEqual(result, {});
+    assert.equal(logs.length, 1);
+    assert(!logs[0].includes('SECRET'));
+    const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+    assert.equal(report.handler_state, state);
+    assert.equal(report.http_status, 200);
+    assert.equal(report.output_changed, false);
+    assert.equal(report.candidate_in_picker_output, false);
+    assert.equal(report.candidate_in_sheet_output, false);
+  }
+});
+
+test('RC reports emitted candidate separately from schema rejection and handles header casing', () => {
+  for (const key of ['User-Agent', 'user-agent', 'USER-AGENT', 'uSeR-aGeNt']) {
+    const { result, logs } = remote({ camera_filter_config: JSON.stringify(upstream()) }, 'ptb-register', { url: rcUrl, headers: { [key]: 'Locket/SECRET_UA' } });
+    const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+    assert(configOf(result).picker_filters.includes(id));
+    assert.equal(report.handler_state, 'processed');
+    assert.equal(report.output_changed, true);
+    assert.equal(report.candidate_in_picker_output, true);
+    assert.equal(report.candidate_in_sheet_output, true);
+    assert.equal(report.picker_id_list_valid, true);
+    assert.equal(report.sheet_group_list_valid, true);
+    assert.equal(report.build, '20261123_m0_m1_02');
+  }
+  const { logs } = remote({ camera_filter_config: JSON.stringify({ picker_filters: ['live'], sheet_filters: [{ title: { vi: 'SECRET_TITLE' }, filter_ids: ['live'] }] }) });
+  const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+  assert.equal(report.state, 'unsupported_upstream');
+  assert.equal(report.candidate_in_picker_output, false);
+  assert.equal(report.picker_id_list_valid, true);
+  assert.equal(report.sheet_group_list_valid, false);
+  assert.deepEqual(report.first_title_locales, ['vi']);
+  assert(!logs[0].includes('SECRET_TITLE'));
+});
+
+test('RC request probe observes fetch attempts without modifying headers or logging their values', () => {
+  const request = { url: rcUrl + '?key=SECRET_QUERY', method: 'POST', headers: {
+    'USER-AGENT': 'Locket/SECRET_UA', Authorization: 'SECRET_AUTH', Cookie: 'SECRET_COOKIE', 'If-None-Match': 'SECRET_ETAG'
+  }, body: 'SECRET_BODY' };
+  const original = JSON.stringify(request);
+  const { result, logs } = run('scripts/ptb_rc_fetch_metadata.js', request, undefined, 'metadata');
+  assert.deepEqual(result, {});
+  assert.equal(JSON.stringify(request), original);
+  assert.equal(logs.length, 1);
+  assert(!logs[0].includes('SECRET'));
+  const report = JSON.parse(logs[0].slice('[MKC-PTB-RC-FETCH] '.length));
+  assert.equal(report.user_agent_state, 'locket');
+  assert.equal(report.conditional_headers_present, true);
+  assert.equal(report.method, 'POST');
+  for (const url of [rcUrl + '/extra', rcUrl.replace('locket-4252a', 'other-project'), rcUrl.replace('https:', 'http:')]) {
+    assert.deepEqual(run('scripts/ptb_rc_fetch_metadata.js', { ...request, url }, undefined, 'metadata').logs, []);
+  }
+  assert.deepEqual(run('scripts/ptb_rc_fetch_metadata.js', request, undefined, '').logs, []);
+});
+
 function probe(body, type = 'application/json', requestExtra = {}, response) {
   const request = { url: imageUrl + '?token=SECRET_QUERY', method: 'POST', headers: { 'Content-Type': type, Authorization: 'SECRET_AUTH', Cookie: 'SECRET_COOKIE' }, body, ...requestExtra };
   return run('scripts/ptb_image_metadata.js', request, response, 'metadata');
@@ -194,7 +260,7 @@ test('module regexes match only intended hosts/paths; attributes and local scrip
         }
         assert(line.includes('max-size=2097152'));
       }
-      if (name === 'locket_rc') {
+      if (name === 'locket_rc' || name === 'mkc_ptb_rc_fetch') {
         assert(regex.test(rcUrl)); assert(regex.test(rcUrl + '?x=1'));
         assert(!regex.test(rcUrl.replace('locket-4252a', 'other-project')));
         assert(!regex.test(rcUrl + '/extra'));
