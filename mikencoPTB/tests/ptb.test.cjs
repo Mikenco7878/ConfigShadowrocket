@@ -92,7 +92,7 @@ test('incompatible live values are preserved and never used for guessed registra
   }
 });
 
-test('UI control is opt-in, uses an unchanged existing filter and is idempotent', () => {
+test('UI control uses an unchanged existing filter and is idempotent', () => {
   const { result, logs } = remote({}, 'ptb-register-control');
   const configured = configOf(result);
   const control = configured.sheet_filters.find(group => group.title.en === 'MKC — Kiểm tra UI');
@@ -107,6 +107,45 @@ test('UI control is opt-in, uses an unchanged existing filter and is idempotent'
   const again = remote(JSON.parse(result.body).entries, 'ptb-register-control');
   assert.deepEqual(configOf(again.result), configured);
   assert(!configOf(remote({}).result).sheet_filters.some(group => group.title.en === control.title.en));
+});
+
+test('missing or legacy debug argument cannot silently disable feature registration', () => {
+  for (const argument of [undefined, null, {}, '', '  ', 'debug', ' debug ']) {
+    const { result, logs } = run('scripts/forceLocketGold.js', { url: rcUrl, headers: { 'User-Agent': 'Locket/LOCAL_TEST' } }, { status: 200, body: '{"entries":{}}' }, argument);
+    const config = configOf(result);
+    assert(config.picker_filters.includes(id));
+    assert.equal(config.sheet_filters[0].title.en, 'MKC — Kiểm tra UI');
+    assert.deepEqual(config.sheet_filters[0].filter_ids, ['okay_wig']);
+    const report = JSON.parse(logs.find(line => line.startsWith('[MKC-PTB-RC] ')).slice('[MKC-PTB-RC] '.length));
+    assert.equal(report.argument_source, typeof argument === 'string' && argument.trim() === 'debug' ? 'legacy_debug' : 'default');
+    assert.equal(report.control_group_in_sheet_output, true);
+    assert.equal(report.candidate_in_sheet_output, true);
+  }
+});
+
+test('feature defaults retain endpoint and identity guards and respect observe mode', () => {
+  for (const request of [
+    { url: rcUrl + '/extra', headers: { 'User-Agent': 'Locket/LOCAL_TEST' } },
+    { url: rcUrl.replace('locket-4252a', 'other-project'), headers: { 'User-Agent': 'Locket/LOCAL_TEST' } },
+    { url: rcUrl, headers: { 'User-Agent': 'Other/LOCAL_TEST' } },
+    { url: rcUrl, headers: {} }
+  ]) {
+    assert.deepEqual(run('scripts/forceLocketGold.js', request, { body: '{"entries":{}}' }, undefined).result, {});
+  }
+  const observe = configOf(remote({}, 'ptb-observe').result);
+  assert(!observe.picker_filters.includes(id));
+  assert(!observe.sheet_filters.some(group => group.title.en === 'MKC — Kiểm tra UI'));
+});
+
+test('visible controls lead the sheet while every other live group keeps its fields and relative order', () => {
+  const original = upstream();
+  original.sheet_filters.push({ title: { en: 'Another live group' }, filter_ids: ['live_more'], keep: { marker: true } });
+  const configured = configOf(remote({ camera_filter_config: JSON.stringify(original) }, 'ptb-register-control').result);
+  assert.equal(configured.sheet_filters[0].title.en, 'MKC — Kiểm tra UI');
+  assert.equal(configured.sheet_filters[1].title.en, 'Photobooth MKC 📸');
+  assert.deepEqual(configured.sheet_filters.slice(2, 5).map(group => group.title), original.sheet_filters.map(group => group.title));
+  assert.deepEqual(configured.sheet_filters[2], original.sheet_filters[0]);
+  assert.deepEqual(configured.sheet_filters[4], original.sheet_filters[2]);
 });
 
 test('registration preserves unknown upstream fields without inventing catalog aliases', () => {
@@ -171,7 +210,7 @@ test('RC reports emitted candidate separately from schema rejection and handles 
     assert.equal(report.candidate_in_sheet_output, true);
     assert.equal(report.picker_id_list_valid, true);
     assert.equal(report.sheet_group_list_valid, true);
-    assert.equal(report.build, '20261123_m0_m1_03');
+    assert.equal(report.build, '20261123_m0_m1_04');
   }
   const { logs } = remote({ camera_filter_config: JSON.stringify({ picker_filters: ['live'], sheet_filters: [{ title: { vi: 'SECRET_TITLE' }, filter_ids: ['live'] }] }) });
   const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));

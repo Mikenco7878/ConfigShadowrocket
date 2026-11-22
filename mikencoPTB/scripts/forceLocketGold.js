@@ -1,11 +1,14 @@
 // Locket Remote Config
 // Endpoint: firebaseremoteconfig.googleapis.com
-// Updated: 10:56 11/11/2026 (UTC+7)
+// Updated: 01:21:09 23/11/2026 (UTC+7)
 (function () {
 var result = {};
 var diagnosticState = "failed:request_context";
-var ptbControlEnabled = typeof $argument === "string" && $argument === "ptb-register-control";
-var ptbMode = ptbControlEnabled ? "ptb-register" : typeof $argument === "string" && /^ptb-(observe|register)$/.test($argument) ? $argument : "";
+var ptbArgument = typeof $argument === "string" ? $argument.trim() : "";
+// This feature-branch script must also work with legacy modules lacking argument.
+var ptbArgumentSource = !ptbArgument ? "default" : ptbArgument === "debug" ? "legacy_debug" : "explicit";
+var ptbControlEnabled = !ptbArgument || ptbArgument === "debug" || ptbArgument === "ptb-register-control";
+var ptbMode = ptbControlEnabled ? "ptb-register" : /^ptb-(observe|register)$/.test(ptbArgument) ? ptbArgument : "";
 var ptbDetails = { state: "not_evaluated", upstream_fields: [], catalog_item_fields: [] };
 var ptbCandidateInPicker = false;
 var ptbCandidateInSheet = false;
@@ -70,7 +73,10 @@ function configurePhotobooth(originalText, configuredText) {
       var title = "Photobooth MKC 📸";
       var group = configured.sheet_filters.filter(function (item) { return item.title.en === title; })[0];
       if (group) appendIds(group.filter_ids, [id]);
-      else configured.sheet_filters.push({ title: { en: title }, filter_ids: [id] });
+      else {
+        group = { title: { en: title }, filter_ids: [id] };
+        configured.sheet_filters.push(group);
+      }
       // A list reference is an experiment, not proof that the client resolves this ID.
       state = "candidate_listed_client_support_unverified";
       if (ptbControlEnabled && configured.picker_filters.indexOf("okay_wig") !== -1) {
@@ -79,7 +85,10 @@ function configurePhotobooth(originalText, configuredText) {
         var controlTitle = "MKC — Kiểm tra UI";
         var controlGroup = configured.sheet_filters.filter(function (item) { return item.title.en === controlTitle; })[0];
         if (controlGroup) appendIds(controlGroup.filter_ids, ["okay_wig"]);
-        else configured.sheet_filters.push({ title: { en: controlTitle }, filter_ids: ["okay_wig"] });
+        else controlGroup = { title: { en: controlTitle }, filter_ids: ["okay_wig"] };
+        // Make the control easy to find; preserve relative order of all other groups.
+        configured.sheet_filters = configured.sheet_filters.filter(function (item) { return item !== controlGroup && item !== group; });
+        configured.sheet_filters.unshift(controlGroup, group);
       }
     }
   }
@@ -676,8 +685,9 @@ if (ptbMode) {
     var ptbStatusMatch = /^(?:HTTP\/\d(?:\.\d)?\s+)?([1-5][0-9]{2})(?:\s|$)/.exec(String(ptbStatusValue));
     var outputChanged = diagnosticState === "processed" && typeof result.body === "string";
     console.log("[MKC-PTB-RC] " + JSON.stringify(Object.assign({
-      build: "20261123_m0_m1_03",
+      build: "20261123_m0_m1_04",
       mode: ptbMode,
+      argument_source: ptbArgumentSource,
       handler_state: diagnosticState,
       http_status: ptbStatusMatch ? Number(ptbStatusMatch[1]) : null,
       output_changed: outputChanged,

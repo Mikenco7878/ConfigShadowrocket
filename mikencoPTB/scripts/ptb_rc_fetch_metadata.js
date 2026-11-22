@@ -17,7 +17,7 @@
       if (["if-none-match", "if-modified-since", "x-goog-if-none-match"].indexOf(name) !== -1) conditionalHeadersPresent = true;
     });
     console.log("[MKC-PTB-RC-FETCH] " + JSON.stringify({
-      build: "20261123_m0_m1_03",
+      build: "20261123_m0_m1_04",
       method: /^(?:GET|POST|HEAD|OPTIONS)$/.test(request.method || "") ? request.method : "unknown",
       user_agent_state: userAgentState,
       conditional_headers_present: conditionalHeadersPresent

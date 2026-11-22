@@ -28,7 +28,7 @@ function startServer(address, port) {
     try {
       let body = fs.readFileSync(path.join(base, relative));
       if (relative.startsWith('modules/')) {
-        body = Buffer.from(body.toString('utf8').replace(/https:\/\/raw\.githubusercontent\.com\/Mikenco7878\/ConfigShadowrocket\/(?:main|feat\/mikenco-ptb-mvp)\/mikencoPTB\//g, `${origin}/mikencoPTB/`));
+        body = Buffer.from(body.toString('utf8').replace(/https:\/\/raw\.githubusercontent\.com\/Mikenco7878\/ConfigShadowrocket\/(?:refs\/heads\/)?(?:main|feat\/mikenco-ptb-mvp)\/mikencoPTB\//g, `${origin}/mikencoPTB/`));
       }
       response.writeHead(200, { 'Content-Type': files.get(relative), 'Content-Length': body.length, 'Cache-Control': 'no-store' });
       response.end(request.method === 'HEAD' ? undefined : body);

@@ -1,19 +1,19 @@
 #!name=MKC Locket PTB
-#!desc=Experimental PTB list registration; client support unverified. Existing Locket handlers preserved.
-# Build: 20261123_m0_m1_03
-# Updated: 01:06:04 23/11/2026 (UTC+7)
+#!desc=Build 04. Updated: 01:21:09 23/11/2026 (UTC+7). Experimental PTB registration; client support unverified.
+# Build: 20261123_m0_m1_04
+# Updated: 01:21:09 23/11/2026 (UTC+7)
 # Author: Mikenco7878
 
 [Script]
 # This request probe observes fetch attempts; it does not force a refresh.
-mkc_ptb_rc_fetch = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=false,timeout=10,argument=metadata,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/scripts/ptb_rc_fetch_metadata.js?v=20261123_m0_m1_03
+mkc_ptb_rc_fetch = type=http-request,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=false,timeout=10,argument=metadata,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/scripts/ptb_rc_fetch_metadata.js?v=20261123_m0_m1_04
 # RevenueCat handlers also check the Locket User-Agent inside each script.
 # Set argument=debug to emit status labels without request or response contents.
-revenuecat = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,requires-body=true,max-size=-1,timeout=60,argument=debug,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/scripts/revenuecat.js?v=20261123_m0_m1_03
-deleteHeader = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,timeout=60,argument=debug,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/scripts/deleteHeader.js?v=20261123_m0_m1_03
+revenuecat = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,requires-body=true,max-size=-1,timeout=60,argument=debug,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/scripts/revenuecat.js?v=20261123_m0_m1_04
+deleteHeader = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,timeout=60,argument=debug,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/scripts/deleteHeader.js?v=20261123_m0_m1_04
 # ptb-register-control adds a labelled UI control using the existing okay_wig filter.
 # ptb-register omits the UI control; ptb-observe adds neither group. Unknown live schemas remain untouched.
-locket_rc = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,argument=ptb-register-control,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/scripts/forceLocketGold.js?v=20261123_m0_m1_03
+locket_rc = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/namespaces\/firebase:fetch(?:\?[^#]*)?$,requires-body=true,max-size=2097152,timeout=10,argument=ptb-register-control,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/scripts/forceLocketGold.js?v=20261123_m0_m1_04
 
 [MITM]
 enable = true
