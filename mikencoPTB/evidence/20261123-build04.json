@@ -1,0 +1,54 @@
+{
+  "source": "user-provided-safe-script-metadata-and-ui-observation",
+  "date": "2026-11-23",
+  "timezone": "Asia/Bangkok",
+  "locket_version": "2.74.0",
+  "raw_response_available": false,
+  "ui": {
+    "control_group_visible": true,
+    "photobooth_group_visible": false
+  },
+  "fetch": {
+    "local_time": "03:19:53.591",
+    "build": "20261123_m0_m1_04",
+    "method": "POST",
+    "user_agent_state": "locket",
+    "conditional_headers_present": true
+  },
+  "response": {
+    "local_time": "03:19:53.706",
+    "build": "20261123_m0_m1_04",
+    "mode": "ptb-register",
+    "argument_source": "explicit",
+    "handler_state": "processed",
+    "http_status": 200,
+    "output_changed": true,
+    "control_enabled": true,
+    "control_group_in_sheet_output": true,
+    "candidate_in_picker_output": true,
+    "candidate_in_sheet_output": true,
+    "state": "candidate_listed_client_support_unverified",
+    "registration_schema": "existing_mkc_lists",
+    "upstream_type": "undefined",
+    "upstream_fields": [],
+    "catalog_item_fields": [],
+    "picker_id_list_valid": false,
+    "sheet_group_list_valid": false,
+    "first_sheet_group_fields": [],
+    "first_title_locales": []
+  },
+  "interpretation": {
+    "confirmed": [
+      "RC hooks executed on this reproduction",
+      "The response script emitted both candidate list references",
+      "The existing-filter control group is visible on the device",
+      "camera_filter_config was absent from this upstream response"
+    ],
+    "unverified": [
+      "Whether the upstream response was conditional or contained a full template",
+      "Where the client obtains executable filter definitions",
+      "Whether the client supports an arbitrary new filter ID",
+      "The image processing request/response and preview-close behavior"
+    ]
+  }
+}

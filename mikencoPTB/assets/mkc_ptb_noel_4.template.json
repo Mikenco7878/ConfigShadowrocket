@@ -3,7 +3,13 @@
   "template_id": "mkc_ptb_noel_4",
   "display_name": "Photobooth Noel (4 ô)",
   "group_name": "Photobooth MKC 📸",
-  "status": "experimental-list-reference-client-resolution-unverified",
+  "status": "list-reference-emitted-control-visible-photobooth-not-visible",
+  "device_observation": {
+    "locket_version": "2.74.0",
+    "control_group_visible": true,
+    "photobooth_group_visible": false,
+    "safe_evidence": "../evidence/20261123-build04.json"
+  },
   "thumbnail": {
     "file": "mkc_ptb_noel_4.thumbnail.png",
     "purpose": "local-preview-only",

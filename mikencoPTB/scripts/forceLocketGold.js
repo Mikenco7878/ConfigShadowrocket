@@ -1,6 +1,6 @@
 // Locket Remote Config
 // Endpoint: firebaseremoteconfig.googleapis.com
-// Updated: 01:21:09 23/11/2026 (UTC+7)
+// Updated: 03:26:44 23/11/2026 (UTC+7)
 (function () {
 var result = {};
 var diagnosticState = "failed:request_context";
@@ -13,6 +13,7 @@ var ptbDetails = { state: "not_evaluated", upstream_fields: [], catalog_item_fie
 var ptbCandidateInPicker = false;
 var ptbCandidateInSheet = false;
 var ptbControlInSheet = false;
+var ptbServerSummary = null;
 
 function valueType(value) {
   return value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
@@ -20,6 +21,24 @@ function valueType(value) {
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function describeServerResponse(value) {
+  var record = isRecord(value);
+  var hasEntries = record && Object.prototype.hasOwnProperty.call(value, "entries");
+  var entries = record ? value.entries : undefined;
+  var state = record ? value.state : undefined;
+  var knownStates = ["UPDATE", "NO_CHANGE", "EMPTY_CONFIG", "NO_TEMPLATE"];
+  var allowedEntries = ["camera_filter_config", "celebrity_filter_config", "camera_filters", "filter_config", "filter_catalog", "camera_filter_catalog", "remote_filters"];
+  return {
+    state: knownStates.indexOf(state) !== -1 ? state : state === undefined ? "missing" : "other",
+    entries_present: hasEntries,
+    entries_type: valueType(entries),
+    entry_count: isRecord(entries) ? Object.keys(entries).length : null,
+    filter_entry_names: isRecord(entries) ? allowedEntries.filter(function (key) {
+      return Object.prototype.hasOwnProperty.call(entries, key);
+    }) : []
+  };
 }
 
 function isIdList(value) {
@@ -154,6 +173,8 @@ diagnosticState = ua ? "skipped:non_locket" : "skipped:user_agent_missing";
 if (ua.includes("Locket")) {
   diagnosticState = "failed:json_parse";
   var obj = JSON.parse($response.body);
+  // Capture only fixed state labels and allowlisted key names BEFORE any writes.
+  ptbServerSummary = describeServerResponse(obj);
   diagnosticState = "skipped:unsupported_schema";
   if (!obj || typeof obj !== "object" || Array.isArray(obj) ||
       (obj.entries !== undefined && (!obj.entries || typeof obj.entries !== "object" || Array.isArray(obj.entries)))) {
@@ -685,9 +706,10 @@ if (ptbMode) {
     var ptbStatusMatch = /^(?:HTTP\/\d(?:\.\d)?\s+)?([1-5][0-9]{2})(?:\s|$)/.exec(String(ptbStatusValue));
     var outputChanged = diagnosticState === "processed" && typeof result.body === "string";
     console.log("[MKC-PTB-RC] " + JSON.stringify(Object.assign({
-      build: "20261123_m0_m1_04",
+      build: "20261123_m0_m1_05",
       mode: ptbMode,
       argument_source: ptbArgumentSource,
+      upstream_response: ptbServerSummary,
       handler_state: diagnosticState,
       http_status: ptbStatusMatch ? Number(ptbStatusMatch[1]) : null,
       output_changed: outputChanged,

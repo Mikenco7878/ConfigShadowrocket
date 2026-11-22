@@ -210,7 +210,7 @@ test('RC reports emitted candidate separately from schema rejection and handles 
     assert.equal(report.candidate_in_sheet_output, true);
     assert.equal(report.picker_id_list_valid, true);
     assert.equal(report.sheet_group_list_valid, true);
-    assert.equal(report.build, '20261123_m0_m1_04');
+    assert.equal(report.build, '20261123_m0_m1_05');
   }
   const { logs } = remote({ camera_filter_config: JSON.stringify({ picker_filters: ['live'], sheet_filters: [{ title: { vi: 'SECRET_TITLE' }, filter_ids: ['live'] }] }) });
   const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
@@ -240,6 +240,55 @@ test('RC request probe observes fetch attempts without modifying headers or logg
     assert.deepEqual(run('scripts/ptb_rc_fetch_metadata.js', { ...request, url }, undefined, 'metadata').logs, []);
   }
   assert.deepEqual(run('scripts/ptb_rc_fetch_metadata.js', request, undefined, '').logs, []);
+});
+
+test('RC refresh removes only conditional headers on the scoped Locket POST', () => {
+  const request = { url: rcUrl + '?key=SECRET_KEY', method: 'POST', body: 'SECRET_BODY', headers: {
+    'USER-AGENT': 'Locket/TEST', Authorization: 'SECRET_AUTH', Cookie: 'SECRET_COOKIE',
+    'X-Goog-Firebase-Installations-Auth': 'SECRET_INSTALLATION', 'Content-Type': 'application/json',
+    'If-None-Match': 'SECRET_ETAG', 'IF-MODIFIED-SINCE': 'SECRET_DATE', 'x-goog-if-none-match': 'SECRET_ETAG_2'
+  } };
+  const before = JSON.stringify(request);
+  const { result, logs } = run('scripts/ptb_rc_fetch_metadata.js', request, undefined, 'refresh');
+  assert.equal(JSON.stringify(request), before);
+  assert.equal(result.body, undefined);
+  for (const key of ['USER-AGENT', 'Authorization', 'Cookie', 'X-Goog-Firebase-Installations-Auth', 'Content-Type']) assert.equal(result.headers[key], request.headers[key]);
+  assert.equal(Object.keys(result.headers).length, 5);
+  const report = JSON.parse(logs[0].slice('[MKC-PTB-RC-FETCH] '.length));
+  assert.equal(report.conditional_headers_removed_count, 3);
+  assert.equal(report.mode, 'refresh');
+  assert(!logs.join('').includes('SECRET'));
+});
+
+test('RC refresh preserves unsupported identities, methods, endpoints and unconditional requests', () => {
+  const original = { url: rcUrl, method: 'POST', headers: { 'User-Agent': 'Locket/TEST', 'If-None-Match': 'SECRET_ETAG' } };
+  for (const request of [
+    { ...original, method: 'GET' },
+    { ...original, headers: { 'User-Agent': 'Other/TEST', 'If-None-Match': 'SECRET_ETAG' } },
+    { ...original, headers: { 'If-None-Match': 'SECRET_ETAG' } },
+    { ...original, url: rcUrl + '/extra' },
+    { ...original, headers: { 'User-Agent': 'Locket/TEST' } }
+  ]) assert.deepEqual(run('scripts/ptb_rc_fetch_metadata.js', request, undefined, 'refresh').result, {});
+});
+
+test('RC original-response summary precedes writes and never emits config values or dynamic entry names', () => {
+  const request = { url: rcUrl, headers: { 'User-Agent': 'Locket/TEST' } };
+  for (const state of ['NO_CHANGE', 'UPDATE', 'EMPTY_CONFIG', 'NO_TEMPLATE', 'SECRET_STATE']) {
+    const { result, logs } = run('scripts/forceLocketGold.js', request, { status: 200, body: JSON.stringify({ state }) }, 'ptb-register-control');
+    const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+    assert.equal(report.upstream_response.state, state === 'SECRET_STATE' ? 'other' : state);
+    assert.equal(report.upstream_response.entries_present, false);
+    assert.equal(report.upstream_response.entries_type, 'undefined');
+    assert.equal(report.upstream_response.entry_count, null);
+    assert.deepEqual(report.upstream_response.filter_entry_names, []);
+    assert.equal(JSON.parse(result.body).state, state, 'do not invent an UPDATE response state');
+    assert(!logs.join('').includes('SECRET'));
+  }
+  const { logs } = remote({ camera_filter_config: JSON.stringify(upstream()), SECRET_DYNAMIC_ENTRY: 'SECRET_VALUE', camera_filter_catalog: 'SECRET_CATALOG' });
+  const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+  assert.equal(report.upstream_response.entry_count, 3);
+  assert.deepEqual(report.upstream_response.filter_entry_names, ['camera_filter_config', 'camera_filter_catalog']);
+  assert(!logs.join('').includes('SECRET'));
 });
 
 function probe(body, type = 'application/json', requestExtra = {}, response) {

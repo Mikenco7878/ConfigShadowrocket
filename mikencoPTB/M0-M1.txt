@@ -2,7 +2,7 @@ Photobooth MKC — M0 + M1
 
 Nhánh local: `feat/mikenco-ptb-mvp`. Ngày chuẩn bị: 2026-11-23 (UTC+7).
 Phát hành theo yêu cầu người dùng trên nhánh feature; không push vào `main`.
-Build module/script URL: `20261123_m0_m1_04`. Mọi file triển khai nằm trong `mikencoPTB/`.
+Build module/script URL: `20261123_m0_m1_05`. Mọi file triển khai nằm trong `mikencoPTB/`.
 
 Quy ước bảo trì theo yêu cầu người dùng: mỗi lần sửa file `.sgmodule`, cập nhật
 header `# Updated: HH:mm:ss DD/MM/YYYY (UTC+7)` bằng thời điểm sửa thực tế theo
@@ -13,7 +13,7 @@ kể cả khi chỉ sửa comment hoặc script-path.
 
 | Hạng mục | Đã có | Chưa xác minh |
 | --- | --- | --- |
-| M0 — đăng ký | Tham chiếu thử `mkc_ptb_noel_4` vào `picker_filters` và nhóm `sheet_filters` có điều kiện; không tạo catalog field mới | App chấp nhận ID mới, hiển thị item/tên/thumbnail và gọi xử lý ảnh |
+| M0 — đăng ký một phần | Log build 04 xác nhận đã xuất ID trong picker/nhóm; người dùng Locket 2.74.0 xác nhận nhóm đối chứng hiện | Nhóm PTB không hiện; chưa có định nghĩa catalog được xác minh cho ID mới |
 | Metadata | Tên `Photobooth Noel (4 ô)`, nhóm `Photobooth MKC 📸`, thumbnail PNG, bản nháp tọa độ 2×2 trong manifest riêng | Field tương ứng của catalog Locket, alpha mask chính xác, chụp một hay bốn ảnh |
 | M1 — thu thập | Probe metadata có giới hạn, công cụ HAR offline, checklist đối chứng | Endpoint/method đang dùng trên bản app thực tế, schema ảnh đầu vào/response, session và hành vi bấm X |
 | Backend/AI | Chưa triển khai, không redirect, không gọi dịch vụ ảnh | Chỉ xem xét backend sau khi đủ bằng chứng bên dưới |
@@ -43,8 +43,8 @@ Không gọi endpoint tạo ảnh thật, không replay request và không dùng
 ## M0 hoạt động thế nào
 
 Một hook response Remote Config trong `modules/mkc.sgmodule` gọi script cũ đã sửa;
-request probe riêng chỉ ghi nhận fetch, không sửa request/cache header. Module debug
-ảnh không thêm hook RC cạnh tranh.
+request probe có `metadata` để chỉ quan sát và `refresh` để bỏ header điều kiện của
+đúng request RC Locket POST. Module debug ảnh không thêm hook RC cạnh tranh.
 
 1. Các chế độ `ptb-observe`/`ptb-register`/`ptb-register-control` giới hạn URL vào đúng
    `https://firebaseremoteconfig.googleapis.com/v1/projects/locket-4252a/namespaces/firebase:fetch`
@@ -109,6 +109,57 @@ không có, cần dòng `[MKC-PTB-RC]` của build 04 trước khi thay tiếp s
 output báo có đối chứng mà UI không có, tiếp tục xác minh config activation/cách
 app đọc nhóm; không suy ra chỉ cần xây backend là giải quyết được UI.
 
+### Bằng chứng iPhone: Locket 2.74.0, build 04
+
+Người dùng xác nhận nhóm đối chứng hiện và nhóm `Photobooth MKC 📸` không hiện.
+Log lúc 03:19:53 ngày 2026-11-23 (UTC+7), lưu metadata đã ẩn dữ liệu tại
+`evidence/20261123-build04.json`, cho biết:
+
+- Request POST đúng scope, UA Locket; có header điều kiện (`conditional_headers_present: true`).
+- Response HTTP 200, handler processed, đã tạo output.
+- Cả hai cờ `candidate_in_picker_output` và `candidate_in_sheet_output` true.
+- `upstream_type: undefined`, `upstream_fields: []`, `catalog_item_fields: []`:
+  response gốc lần này thiếu `camera_filter_config`, không có catalog để đọc từ field đó.
+- `picker_id_list_valid`/`sheet_group_list_valid` false phản ánh field upstream
+  vắng mặt; không phủ định việc script đã tạo danh sách MKC trong output.
+
+Đã xác nhận cơ chế nhóm với ID cũ; chưa xác nhận ID mới được client resolve.
+Khả năng nhóm rỗng bị ẩn do không resolve được ID là suy luận, chưa phải kết luận
+về catalog nhúng sẵn, server hoặc giới hạn cố định của Locket 2.74.0.
+HTTP 200 này là Remote Config, không phải response API tạo ảnh; M1 ảnh vẫn thiếu mẫu.
+
+### Build 05: kiểm tra response gốc đầy đủ hơn trước khi đoán catalog
+
+Theo mã nguồn Firebase iOS, request có thể gửi ETag qua `if-none-match`; nhánh
+`NO_CHANGE` giữ fetched config, còn `UPDATE` đọc entries. Vì vậy thiếu một field ở
+response có điều kiện chưa chứng minh field đó không có trong template đầy đủ.
+Nguồn chính: [RCNConfigFetch.m](https://github.com/firebase/firebase-ios-sdk/blob/main/FirebaseRemoteConfig/Sources/RCNConfigFetch.m),
+[RCNConfigContent.m](https://github.com/firebase/firebase-ios-sdk/blob/main/FirebaseRemoteConfig/Sources/RCNConfigContent.m).
+
+Module thử dùng `argument=refresh` ở `mkc_ptb_rc_fetch` để bỏ `if-none-match`,
+`if-modified-since`, `x-goog-if-none-match` trên POST đúng URL project Locket và có
+UA Locket. Không sửa URL, body, Authorization, Cookie, token installation hay header
+khác. Không tự phát request, không đặt vòng lặp, không ép app fetch/activate.
+Đây là chế độ chẩn đoán ngắn; sau khi thu được log mới, đổi lại `argument=metadata`
+để chỉ quan sát. Metadata mode giữ nguyên toàn bộ header như các bản trước.
+
+`[MKC-PTB-RC-FETCH]` bổ sung `mode` và `conditional_headers_removed_count`.
+`[MKC-PTB-RC]` bổ sung `upstream_response`, lấy TRƯỚC mọi thay đổi:
+
+- `state`: chỉ các nhãn cố định UPDATE/NO_CHANGE/EMPTY_CONFIG/NO_TEMPLATE/missing/other.
+- `entries_present`, `entries_type`, `entry_count`.
+- `filter_entry_names`: chỉ tên entry liên quan filter trong allowlist, không có giá trị.
+
+Không tự đổi response state thành UPDATE để làm SDK chấp nhận một response do
+script tự bổ sung; cần giữ rõ đâu là template gốc. Không thêm remoteFilters/filters
+hoặc prompt/engine từ module bên thứ ba chưa được kiểm chứng.
+
+Cập nhật module và script, mở lại Locket, gửi hai dòng metadata của build 05 sau một
+lần fetch thực sự. Nếu vẫn NO_CHANGE hoặc không có fetch mới, ghi nhận đúng trạng
+thái; không xóa dữ liệu app/tài khoản để ép thử. Nếu UPDATE có entry catalog/config
+filter, dùng hình dạng gốc đó để quyết định bước tiếp. Nếu UPDATE vẫn không có, cần
+quan sát luồng tải catalog bằng request thực tế; không dựng endpoint mới để đoán.
+
 ### Các sửa đổi trước build 04
 
 Người dùng đã báo UI Filter chưa hiển thị PTB và xác nhận thấy nhóm Goofy mang
@@ -165,13 +216,13 @@ Prompt đã dùng (không phải prompt runtime của Locket):
 Thêm/cập nhật hai URL này trong mục Module của Shadowrocket:
 
 ```text
-https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule?v=20261123_m0_m1_04
-https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module?v=20261123_m0_m1_04
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule?v=20261123_m0_m1_05
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/refs/heads/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module?v=20261123_m0_m1_05
 ```
 
 Nếu bản cũ lấy từ LAN, đổi nguồn sang Raw hoặc tắt bản LAN rồi thêm bản Raw;
 không bật hai bản base cùng lúc. Tải lại module và các script; kiểm tra comment
-`Build: 20261123_m0_m1_04` và script-path có query version tương ứng.
+`Build: 20261123_m0_m1_05` và script-path có query version tương ứng.
 Không cần giữ máy tính/server LAN sau khi đã cài từ Raw.
 
 Vẫn cần HTTPS Decryption, CA tin cậy và tắt hook trùng như hướng dẫn dưới.
@@ -326,7 +377,7 @@ Get-ChildItem scripts\*.js,tools\*.cjs,tests\*.cjs | ForEach-Object { node --che
 node --test tests/ptb.test.cjs
 ```
 
-Đã PASS 24 test Node.js: bảo toàn toàn bộ đầu ra ngoài filter bằng hash baseline,
+Đã PASS 27 test Node.js: bảo toàn toàn bộ đầu ra ngoài filter bằng hash baseline,
 hai script RevenueCat/header không đổi byte, merge catalog/ID/nhóm, idempotence,
 chế độ observe, schema sai/rỗng/JSON hỏng, URL match và không match, giới hạn body,
 ẩn dữ liệu trong log, sanitizer HAR, PNG/layout và tải script từ server localhost;
@@ -335,6 +386,8 @@ Build 03 bổ sung trường hợp thiếu upstream, nhóm đối chứng opt-in
 bảo toàn field upstream chưa biết mà không tạo alias catalog.
 Build 04 bổ sung argument thiếu/legacy debug, guard URL/UA khi dùng mặc định và
 đưa đối chứng lên đầu mà giữ dữ liệu/thứ tự tương đối của các nhóm cũ.
+Build 05 bổ sung refresh chỉ bỏ header điều kiện đúng scope, giữ nguyên xác thực và
+body, cùng metadata response gốc không lộ state/entry value lạ.
 Kiểm thử dùng dữ liệu giả, không dùng token/ảnh thật và không gọi API Locket.
 Chưa kiểm thử parser module, MITM, UI/filter/API hay X trên iPhone/Shadowrocket.
 
