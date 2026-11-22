@@ -4,10 +4,12 @@
 (function () {
 var result = {};
 var diagnosticState = "failed:request_context";
-var ptbMode = typeof $argument === "string" && /^ptb-(observe|register)$/.test($argument) ? $argument : "";
+var ptbControlEnabled = typeof $argument === "string" && $argument === "ptb-register-control";
+var ptbMode = ptbControlEnabled ? "ptb-register" : typeof $argument === "string" && /^ptb-(observe|register)$/.test($argument) ? $argument : "";
 var ptbDetails = { state: "not_evaluated", upstream_fields: [], catalog_item_fields: [] };
 var ptbCandidateInPicker = false;
 var ptbCandidateInSheet = false;
+var ptbControlInSheet = false;
 
 function valueType(value) {
   return value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
@@ -35,8 +37,8 @@ function configurePhotobooth(originalText, configuredText) {
   var configured = JSON.parse(configuredText);
   var original;
   try { original = JSON.parse(originalText); } catch (error) {}
-  // Inspect the upstream value BEFORE this script supplies its own defaults.
-  var supported = isRecord(original) && isIdList(original.picker_filters) && isGroupList(original.sheet_filters);
+  // Keep upstream evidence separate from the effective lists used by the app.
+  var upstreamSupported = isRecord(original) && isIdList(original.picker_filters) && isGroupList(original.sheet_filters);
   var id = "mkc_ptb_noel_4";
   var state = originalText === undefined ? "missing_upstream" : "unsupported_upstream";
   if (isRecord(original)) {
@@ -58,8 +60,11 @@ function configurePhotobooth(originalText, configuredText) {
     // Preserve malformed or unfamiliar live values instead of replacing a catalog.
     configuredText = originalText;
   }
+  // The user confirmed the distinctive MKC Goofy group is visible on this app.
+  // Missing live lists may use that existing MKC schema; incompatible live values stay untouched.
+  var supported = (isRecord(original) || originalText === undefined) && isIdList(configured.picker_filters) && isGroupList(configured.sheet_filters);
   if (supported) {
-    state = "observed_list_shape";
+    state = upstreamSupported ? "observed_list_shape" : "existing_mkc_list_shape";
     if (ptbMode === "ptb-register") {
       appendIds(configured.picker_filters, [id]);
       var title = "Photobooth MKC 📸";
@@ -68,11 +73,22 @@ function configurePhotobooth(originalText, configuredText) {
       else configured.sheet_filters.push({ title: { en: title }, filter_ids: [id] });
       // A list reference is an experiment, not proof that the client resolves this ID.
       state = "candidate_listed_client_support_unverified";
+      if (ptbControlEnabled && configured.picker_filters.indexOf("okay_wig") !== -1) {
+        // A clearly labelled UI control, using the unchanged existing wig filter.
+        // Do not rename it to Noel or present it as a functioning photobooth.
+        var controlTitle = "MKC — Kiểm tra UI";
+        var controlGroup = configured.sheet_filters.filter(function (item) { return item.title.en === controlTitle; })[0];
+        if (controlGroup) appendIds(controlGroup.filter_ids, ["okay_wig"]);
+        else configured.sheet_filters.push({ title: { en: controlTitle }, filter_ids: ["okay_wig"] });
+      }
     }
   }
   ptbCandidateInPicker = isIdList(configured.picker_filters) && configured.picker_filters.indexOf(id) !== -1;
   ptbCandidateInSheet = isGroupList(configured.sheet_filters) && configured.sheet_filters.some(function (group) {
     return group.filter_ids.indexOf(id) !== -1;
+  });
+  ptbControlInSheet = isGroupList(configured.sheet_filters) && configured.sheet_filters.some(function (group) {
+    return group.title.en === "MKC — Kiểm tra UI" && group.filter_ids.indexOf("okay_wig") !== -1;
   });
   if (ptbMode) {
     try {
@@ -97,6 +113,7 @@ function configurePhotobooth(originalText, configuredText) {
       }) : [];
       ptbDetails = {
         state: state,
+        registration_schema: !supported ? "unsupported" : upstreamSupported ? "upstream_lists" : "existing_mkc_lists",
         upstream_type: valueType(original),
         upstream_fields: fields,
         catalog_item_fields: catalogFields,
@@ -659,11 +676,13 @@ if (ptbMode) {
     var ptbStatusMatch = /^(?:HTTP\/\d(?:\.\d)?\s+)?([1-5][0-9]{2})(?:\s|$)/.exec(String(ptbStatusValue));
     var outputChanged = diagnosticState === "processed" && typeof result.body === "string";
     console.log("[MKC-PTB-RC] " + JSON.stringify(Object.assign({
-      build: "20261123_m0_m1_02",
+      build: "20261123_m0_m1_03",
       mode: ptbMode,
       handler_state: diagnosticState,
       http_status: ptbStatusMatch ? Number(ptbStatusMatch[1]) : null,
       output_changed: outputChanged,
+      control_enabled: ptbControlEnabled,
+      control_group_in_sheet_output: outputChanged && ptbControlInSheet,
       candidate_in_picker_output: outputChanged && ptbCandidateInPicker,
       candidate_in_sheet_output: outputChanged && ptbCandidateInSheet
     }, ptbDetails)));

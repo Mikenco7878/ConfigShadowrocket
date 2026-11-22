@@ -67,9 +67,21 @@ test('registration is idempotent and observe mode never adds the candidate', () 
   assert(!configOf(remote({ camera_filter_config: JSON.stringify(upstream()) }, 'ptb-observe').result).picker_filters.includes(id));
 });
 
-test('no inferred schema from the script defaults; unsupported live values are preserved', () => {
-  assert(!configOf(remote({}).result).picker_filters.includes(id));
-  for (const value of ['broken', '[]', 'null', JSON.stringify({ pickerFilters: ['live'], sheetFilters: [] }), JSON.stringify({ picker_filters: { keep: true }, sheet_filters: ['live'] })]) {
+test('register in the existing app-observed MKC list schema when live config is absent', () => {
+  for (const entries of [{}, { camera_filter_config: '{}' }]) {
+    const { result, logs } = remote(entries);
+    assert(configOf(result).picker_filters.includes(id));
+    const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+    assert.equal(report.registration_schema, 'existing_mkc_lists');
+    assert.equal(report.candidate_in_picker_output, true);
+    assert.equal(report.candidate_in_sheet_output, true);
+    assert.equal(configOf(result).filters, undefined);
+  }
+  assert(!configOf(remote({}, 'ptb-observe').result).picker_filters.includes(id));
+});
+
+test('incompatible live values are preserved and never used for guessed registration', () => {
+  for (const value of ['broken', '[]', 'null', JSON.stringify({ picker_filters: { keep: true }, sheet_filters: ['live'] })]) {
     const { result } = remote({ camera_filter_config: value });
     const returned = JSON.parse(result.body).entries.camera_filter_config;
     if (value.startsWith('{')) {
@@ -78,6 +90,32 @@ test('no inferred schema from the script defaults; unsupported live values are p
     } else assert.equal(returned, value);
     assert(!returned.includes(id));
   }
+});
+
+test('UI control is opt-in, uses an unchanged existing filter and is idempotent', () => {
+  const { result, logs } = remote({}, 'ptb-register-control');
+  const configured = configOf(result);
+  const control = configured.sheet_filters.find(group => group.title.en === 'MKC — Kiểm tra UI');
+  assert.deepEqual(control, { title: { en: 'MKC — Kiểm tra UI' }, filter_ids: ['okay_wig'] });
+  const candidate = configured.sheet_filters.find(group => group.title.en === 'Photobooth MKC 📸');
+  assert.deepEqual(candidate.filter_ids, [id]);
+  assert.equal(configured.filters, undefined);
+  assert(!configured.sheet_filters[0].filter_ids.includes(id));
+  const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
+  assert.equal(report.control_group_in_sheet_output, true);
+  assert.equal(report.control_enabled, true);
+  const again = remote(JSON.parse(result.body).entries, 'ptb-register-control');
+  assert.deepEqual(configOf(again.result), configured);
+  assert(!configOf(remote({}).result).sheet_filters.some(group => group.title.en === control.title.en));
+});
+
+test('registration preserves unknown upstream fields without inventing catalog aliases', () => {
+  const original = { pickerFilters: ['live'], sheetFilters: [], customCatalog: { keep: true } };
+  const configured = configOf(remote({ camera_filter_config: JSON.stringify(original) }).result);
+  for (const key of Object.keys(original)) assert.deepEqual(configured[key], original[key]);
+  assert(configured.picker_filters.includes(id));
+  assert.equal(configured.remoteFilters, undefined);
+  assert.equal(configured.filters, undefined);
 });
 
 test('empty/malformed RC and wrong identity or endpoint pass through', () => {
@@ -133,7 +171,7 @@ test('RC reports emitted candidate separately from schema rejection and handles 
     assert.equal(report.candidate_in_sheet_output, true);
     assert.equal(report.picker_id_list_valid, true);
     assert.equal(report.sheet_group_list_valid, true);
-    assert.equal(report.build, '20261123_m0_m1_02');
+    assert.equal(report.build, '20261123_m0_m1_03');
   }
   const { logs } = remote({ camera_filter_config: JSON.stringify({ picker_filters: ['live'], sheet_filters: [{ title: { vi: 'SECRET_TITLE' }, filter_ids: ['live'] }] }) });
   const report = JSON.parse(logs[0].slice('[MKC-PTB-RC] '.length));
