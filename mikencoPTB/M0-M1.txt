@@ -1,0 +1,282 @@
+Photobooth MKC — M0 + M1
+
+Nhánh local: `feat/mikenco-ptb-mvp`. Ngày chuẩn bị: 2026-11-23 (UTC+7).
+Phát hành theo yêu cầu người dùng trên nhánh feature; không push vào `main`.
+Build module/script URL: `20261123_m0_m1_01`. Mọi file triển khai nằm trong `mikencoPTB/`.
+
+## Trạng thái và bằng chứng
+
+| Hạng mục | Đã có | Chưa xác minh |
+| --- | --- | --- |
+| M0 — đăng ký | Tham chiếu thử `mkc_ptb_noel_4` vào `picker_filters` và nhóm `sheet_filters` có điều kiện; không tạo catalog field mới | App chấp nhận ID mới, hiển thị item/tên/thumbnail và gọi xử lý ảnh |
+| Metadata | Tên `Photobooth Noel (4 ô)`, nhóm `Photobooth MKC 📸`, thumbnail PNG, bản nháp tọa độ 2×2 trong manifest riêng | Field tương ứng của catalog Locket, alpha mask chính xác, chụp một hay bốn ảnh |
+| M1 — thu thập | Probe metadata có giới hạn, công cụ HAR offline, checklist đối chứng | Endpoint/method đang dùng trên bản app thực tế, schema ảnh đầu vào/response, session và hành vi bấm X |
+| Backend/AI | Chưa triển khai, không redirect, không gọi dịch vụ ảnh | Chỉ xem xét backend sau khi đủ bằng chứng bên dưới |
+
+Phân tích `scripts/forceLocketGold.js` ban đầu: `camera_filter_config` là chuỗi JSON
+trong `entries`, chứa bốn cờ UI, sáu nhóm `{title:{en:...}, filter_ids:[...]}` và
+35 ID khác nhau trong `picker_filters`. Chỉ có tham chiếu ID; không có định nghĩa
+catalog cho tên/thumbnail/engine. `allows_custom_filters: true` không chứng minh app
+có thể thực thi ID tùy ý. Các field này trong code cũ cũng chưa phải bằng chứng từ iPhone.
+
+Manh mối đọc trong repo (không sửa ngoài base):
+
+- `scripts/remote.js`, `fix/test.module`: hook hai host Locket cho
+  `/generateFilteredImage`, chủ yếu ghi trạng thái; không có request ảnh mẫu.
+- `remote/decoded/locket_filter_unlock.js`: bỏ qua response `generateFilteredImage`.
+- `fix/Locket_Unlocked.js`: gán đồng thời nhiều biến thể tên field như
+  `remoteFilters`, `remote_filters`, `filters`. Không có capture xác nhận nên không
+  sao chép chúng vào catalog PTB.
+- `fix/image-backend/render-backend-audit.md`: ghi nhận trước đây GET backend bên
+  thứ ba trả URL rỗng. Không dùng kết quả GET đó làm schema POST của Locket.
+- Chưa tìm thấy capture xác nhận `applyFilter`. Tên này chỉ là ứng viên cần khảo sát.
+
+Không gọi endpoint tạo ảnh thật, không replay request và không dùng token thật.
+
+## M0 hoạt động thế nào
+
+Một hook Remote Config duy nhất trong `modules/mkc.sgmodule` gọi script cũ đã sửa;
+không thêm hook RC cạnh tranh trong module debug ảnh.
+
+1. Chỉ chế độ `ptb-observe`/`ptb-register` mới giới hạn URL vào đúng
+   `https://firebaseremoteconfig.googleapis.com/v1/projects/locket-4252a/namespaces/firebase:fetch`
+   (cho phép query). Kiểm tra User-Agent Locket và fallback JSON của script cũ vẫn giữ.
+2. Lưu `camera_filter_config` nhận từ server trước khi script áp dụng mặc định.
+3. Giữ field catalog chưa biết và mọi ID/nhóm từ server; thêm các filter cũ còn thiếu,
+   giữ thứ tự server trước. Với nhóm trùng `title.en`, chỉ thêm ID còn thiếu.
+   Không dọn hay sắp xếp lại các ID trùng đã có sẵn trên server.
+4. `ptb-register` chỉ chèn ID/nhóm khi upstream có `picker_filters` là mảng chuỗi
+   và `sheet_filters` là mảng nhóm có `title.en`/`filter_ids` đúng kiểu.
+   Nếu thiếu, sai kiểu hoặc chỉ có camelCase thì không chèn PTB. Các mảng rỗng đúng
+   kiểu chỉ xác nhận hình dạng; vẫn không chứng minh client nhận ID mới.
+5. Chỉ thêm tham chiếu ID. Tên item, thumbnail, layout ở
+   `assets/mkc_ptb_noel_4.template.json` là schema thiết kế **của MKC**, không đưa
+   vào Remote Config như một schema Locket đã được xác minh.
+
+Nhóm dùng `title.en` giống cấu trúc hiện có; giá trị là `Photobooth MKC 📸`.
+Không tự thêm locale/field tên item, định nghĩa `filters`, prompt hoặc engine.
+Item có thể bị app bỏ qua vì ID không có trong catalog/client/server. Đây là kết quả
+cần ghi nhận, không đổi ID của filter đang hoạt động để ép chạy Photobooth.
+
+Log `[MKC-PTB-RC]` chỉ có mode, trạng thái, tên/kiểu field được cho phép và hình dạng
+item đầu tiên trong một số catalog nếu có. Field lạ thành `<other>`; không log
+giá trị, tên người dùng, Filter ID từ server hay toàn bộ Remote Config.
+
+- `missing_upstream`: response không có config filter gốc.
+- `unsupported_upstream`: chưa nhận ra cấu trúc để đăng ký.
+- `observed_list_shape`: đã thấy cấu trúc danh sách; chưa chèn PTB trong observe.
+- `candidate_listed_client_support_unverified`: đã chèn tham chiếu thử; chưa chứng minh UI.
+
+Nếu không có log RC: kiểm tra URL thực tế, User-Agent, HTTPS Decryption và cache.
+Project dạng số, host/endpoint khác không được tự động mở rộng. Chỉ bổ sung sau
+khi xác nhận thuộc Locket bằng dữ liệu thực tế đã ẩn thông tin riêng.
+
+## Asset Noel
+
+`assets/mkc_ptb_noel_4.thumbnail.png`: PNG 1254×1254, nền đục, bốn ô đen; tạo từ
+ảnh Noel người dùng gửi bằng built-in `imagegen`, đã xem preview. Đây là thumbnail
+tham chiếu, chưa tối ưu kích thước tải và **không phải overlay PNG có bốn lỗ alpha**.
+
+Manifest ghi các hình chữ nhật ước lượng theo ảnh, theo thứ tự trái trên → phải trên
+→ trái dưới → phải dưới. Tọa độ chưa mô tả góc bo/nhân vật chồng lên ô và chưa dùng
+để ghép pixel. `production_overlay` để `null`, tránh coi vùng đen là trong suốt.
+
+Prompt đã dùng (không phải prompt runtime của Locket):
+
+> Use case: precise-object-edit. Asset type: square thumbnail for a developer's experimental Christmas 2x2 photobooth template. Input Image 1 is the user's attached Christmas frame and is the edit target. Preserve its festive cartoon Santa, reindeer, snowman, trees, gifts, red-and-white candy-cane borders, exactly four black rectangular photo openings arranged in a 2x2 grid, and Merry Christmas heading. Produce one clean square thumbnail version suitable for a filter picker, retaining the visual composition and black photo placeholders. Do not insert people, extra photo cells, app UI, watermarks or other text. Keep the layout centered and legible at small size. Opaque background. This is only a thumbnail, not a production alpha overlay.
+
+## Cài trực tiếp từ GitHub
+
+Thêm/cập nhật hai URL này trong mục Module của Shadowrocket:
+
+```text
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule?v=20261123_m0_m1_01
+https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module?v=20261123_m0_m1_01
+```
+
+Nếu bản cũ lấy từ LAN, đổi nguồn sang Raw hoặc tắt bản LAN rồi thêm bản Raw;
+không bật hai bản base cùng lúc. Tải lại module và các script; kiểm tra comment
+`Build: 20261123_m0_m1_01` và script-path có query version tương ứng.
+Không cần giữ máy tính/server LAN sau khi đã cài từ Raw.
+
+Vẫn cần HTTPS Decryption, CA tin cậy và tắt hook trùng như hướng dẫn dưới.
+Việc publish không xác nhận item đã xuất hiện hoặc API ảnh đã hoạt động trên iOS.
+
+## Cài qua LAN khi phát triển local
+
+Server LAN thay URL Raw bằng URL máy tính **trong nội dung module được tải**, không
+ghi đè file và không upload lên GitHub.
+
+1. Máy tính/iPhone cùng mạng riêng. Mở PowerShell ở `mikencoPTB/`; dùng `ipconfig`
+   để tìm IPv4 LAN của máy tính, ví dụ `192.168.1.20`.
+2. Chạy:
+
+   ```powershell
+   node tools/serve-ptb.cjs 192.168.1.20 8765
+   ```
+
+   Giữ cửa sổ đang chạy. Nếu Windows hỏi firewall, chỉ cho mạng riêng đang dùng.
+   Mặc định không có đối số server chỉ nghe localhost; iPhone không truy cập được.
+3. Kiểm tra hai URL bằng Safari rồi thêm chúng vào mục Module của Shadowrocket:
+
+   ```text
+   http://192.168.1.20:8765/mikencoPTB/modules/mkc.sgmodule
+   http://192.168.1.20:8765/mikencoPTB/modules/ptb_image_debug.module
+   ```
+
+4. Bật HTTPS Decryption, cài và tin cậy CA của Shadowrocket theo giao diện bản đang
+   dùng. Module base append `api.revenuecat.com`, `firebaseremoteconfig.googleapis.com`;
+   debug append đúng `api.locketcamera.com` và
+   `us-central1-locket-4252a.cloudfunctions.net`. Không MITM wildcard, không tắt TLS
+   verification, không vượt pinning.
+5. Tắt các hook trùng Remote Config/tạo ảnh trong module khác trong lúc thử; đặc
+   biệt các redirect 307 tới backend bên thứ ba có thể làm sai kết quả. Không dựa
+   vào thứ tự giữa các module để quyết định script nào chạy.
+6. Kiểm tra tải script thành công từ LAN. Import một mình file module chưa đảm bảo
+   script đã được tải. Server chỉ phục vụ tám asset cho phép, không liệt kê thư mục.
+
+Giữ Gold/RevenueCat/Captions trong base cũ; hai file RevenueCat/header không sửa.
+Không có kết luận rằng quyền lợi thuê bao hay toàn bộ tính năng hoạt động trên iOS.
+Module debug ảnh có thể tắt riêng sau mỗi lượt. LAN HTTP chỉ dùng chuyển các file
+code công khai trên mạng riêng; không đưa HAR/token lên server này.
+
+## Kiểm tra item trong camera Filter
+
+1. Ghi phiên bản iOS, Locket, Shadowrocket và trạng thái hai module. Chỉ dùng tài
+   khoản/máy có quyền thử nghiệm và ảnh thử không có dữ liệu riêng.
+2. Lượt A: đổi `argument=ptb-register` thành `argument=ptb-observe` ở hook `locket_rc`
+   trên bản module đang dùng. Mở lại Locket, chờ một lần RC fetch thực sự; lưu log
+   `[MKC-PTB-RC]`. Thử một filter có sẵn để có đối chứng.
+3. Lượt B: dùng `ptb-register`, tải lại module/script nếu cần và xác nhận một lần RC
+   fetch mới. Không xóa dữ liệu ứng dụng/tài khoản để ép refresh. Nếu chưa có fetch,
+   ghi rõ chưa đủ điều kiện kết luận.
+4. Mở camera → Filter, tìm nhóm **Photobooth MKC 📸** và item thử. Ghi riêng:
+   nhóm xuất hiện? có ô item? nhãn gì? có thumbnail? bấm được? có request M1?
+5. Nếu có log `candidate_listed_client_support_unverified` nhưng không có item:
+   ghi nhận “tham chiếu đã chèn, UI chưa resolve ID”; thu schema catalog gốc. Không
+   báo M0 hiển thị thành công và không tự thêm hàng loạt alias field để đoán.
+6. Chỉ khi có item thật mới thử bấm PTB; chưa có backend nên không kỳ vọng ảnh ghép.
+
+`ptb-observe` không chủ động xóa ID đã có từ upstream/cache. Kiểm tra trên lần fetch
+mới để tránh nhầm dữ liệu cũ. Thumbnail/tên trong manifest chưa được nối vào UI.
+
+## M1 — thu thập đã ẩn dữ liệu
+
+Hai hook debug chỉ khớp HTTPS, hai host trên và path chính xác
+`/generateFilteredImage` hoặc `/applyFilter`, có thể kèm query. Không ghi query/host,
+Authorization, Cookie, signed URL, UID, session value, Filter ID value, ảnh/base64,
+prompt hay thông báo lỗi server. Script luôn `$done({})` đúng một lần và không sửa
+request/response, không lưu persistent state, không gọi mạng.
+
+Chỉ copy dòng `[MKC-PTB-M1]` và `[MKC-PTB-RC]` vào báo cáo, không gửi toàn bộ log
+Shadowrocket. Probe JSON chỉ xuất tên field được allowlist, kiểu dữ liệu và đường
+dẫn lồng tối đa 4 tầng/96 field; field lạ thành `<other>`. Mảng chỉ xem phần tử đầu.
+Các nhánh ảnh/token/header/prompt được coi là opaque, không duyệt sâu.
+
+`body_bytes` là số byte UTF-8 đo được cho chuỗi, hoặc `byteLength` cho binary đã có;
+không phải kích thước gói tin nén trên mạng. `declared_bytes` lấy Content-Length
+hợp lệ nếu có. Thiếu body là `null`, không giả thành 0. Chỉ parse chuỗi có MIME
+`application/json`; multipart, protobuf, image không bị ép thành JSON/UTF-8.
+
+Hook `requires-body=true` có giới hạn **2 MiB**, timeout 10 giây. Body lớn hơn có thể
+khiến Shadowrocket bỏ qua script; không có log không chứng minh không có request.
+Trong trường hợp đó đổi hai hook sang `requires-body=false` để khảo sát header;
+tên field cần capture kiểm soát cục bộ. Không đặt `max-size=-1` cho probe ảnh.
+
+Các lượt cần ghi riêng, tự đặt nhãn A/B/C trong ghi chú (không dùng session thật):
+
+| Lượt | Thao tác | Cần ghi |
+| --- | --- | --- |
+| A | Filter có sẵn → tạo ảnh → xem preview | request/response metadata, thời điểm tương đối, UI có nhận ảnh |
+| B | Chỉ mở/đóng sheet Filter | Có request xử lý ảnh hay không trong phạm vi quan sát |
+| C | Tạo ảnh → sau khi preview hiện thì bấm X | UI trở về đâu, ảnh gốc còn không, có request sau X, ảnh tạm còn dùng được không |
+| D | Bấm X khi đang xử lý nếu app có thao tác đó | Request có hoàn tất/cancel, response bị bỏ qua hay dùng lại; chỉ ghi điều nhìn thấy |
+| E | Chọn lại filter rồi tạo lần nữa | Có lần gọi mới, có dùng lại kết quả, field session có xuất hiện cùng vị trí |
+| F | Item PTB nếu đã xuất hiện | Có request không; kiểm tra Filter ID có đúng mẫu bằng đối chiếu tại máy, chỉ báo boolean |
+
+Không suy ra X là “xóa ảnh” hoặc “hủy job” từ việc preview biến mất. Probe không
+quan sát mọi API trên host; muốn xác định endpoint khác sau X, xem danh sách kết
+nối cục bộ và chép lại **method + path tĩnh đã ẩn query/ID**, rồi mới mở rộng hook.
+Không thêm wildcard chỉ để tìm endpoint. Không gửi/xóa moment thật trong lượt này.
+
+Nếu cần HAR: chỉ xuất lượt ngắn và giữ file riêng tại máy, không commit/upload/gửi
+HAR gốc. `.gitignore` loại `.har`, `captures/` và `*.private.json` trong base. Chạy:
+
+```powershell
+node tools/summarize-image-har.cjs C:\Private\locket-test.har
+```
+
+Công cụ offline tái sử dụng đúng probe metadata; bỏ entry ngoài hai endpoint, không
+copy header xác thực vào VM, không decode HAR base64 và không in lỗi parse chứa
+input. HAR tối đa 64 MiB. Kết quả stdout là JSON theo từng request/response, không
+ghi file mới. HAR không có body/được encode thì báo thiếu, không suy ra schema.
+Multipart chưa trích field tự động. Không gửi HAR vào server LAN.
+
+Đối chiếu tại máy để trả lời các điều mà log cố ý không tiết lộ:
+
+- Filter ID nằm ở field nào, kiểu gì? Có bằng ID mẫu không (boolean)?
+- Ảnh gốc là URL, base64, multipart part hay upload trước? Chỉ báo tên field, loại
+  transport và MIME; thay giá trị bằng `<redacted>`, không copy URL có chữ ký.
+- Session/request/job ID nằm ở header hay body, field nào? Chỉ ghi tên/kiểu và nhận
+  xét thay đổi/giữ nguyên qua các lượt, không gửi giá trị hoặc hash định danh thật.
+- Response thành công chứa field nào, kiểu nào? App nhận URL/binary/job polling?
+  Có host/path mới đã được xác minh không? Không gọi lại signed URL để thử đoán.
+- Field thành `<other>`: kiểm tra tên tại máy. Chỉ gửi tên field tĩnh đã rà soát;
+  không gửi khóa động chứa UID/token. Có thể cập nhật allowlist sau khi xem xét.
+
+Tài liệu Firebase mô tả protocol callable nói chung, **không xác nhận Locket dùng
+protocol đó ở hai endpoint này**. Không chế response bằng cách gán mọi alias URL.
+Nguồn: [Firebase callable protocol](https://firebase.google.com/docs/functions/callable-reference),
+[HTTP functions khác callable](https://firebase.google.com/docs/functions/callable),
+[Remote Config API](https://firebase.google.com/docs/reference/remote-config/rest).
+
+## Điều kiện trước khi làm backend
+
+- [ ] Có capture đã ẩn dữ liệu của một lượt filter thật thành công trên bản app xác định.
+- [ ] Xác định endpoint/method, vị trí Filter ID, transport ảnh gốc, field session.
+- [ ] Có schema response thành công mà app thật chấp nhận; phân biệt URL/binary/job.
+- [ ] Xác nhận cách đăng ký tên/thumbnail/ID; item PTB được client resolve.
+- [ ] Ghi nhận preview/X/chọn lại và vòng đời ảnh tạm bằng đối chứng thực tế.
+- [ ] Chốt một ảnh lặp bốn ô hay bốn lần chụp; chưa giả định app hỗ trợ capture bốn lần.
+- [ ] Có alpha overlay/geometry sản xuất, khác thumbnail nền đen hiện tại.
+
+Thiếu các mục trên thì tiếp tục khảo sát; chưa chuyển sang backend.
+
+## Kiểm thử local và rollback
+
+Chạy ở `mikencoPTB/`:
+
+```powershell
+Get-ChildItem scripts\*.js,tools\*.cjs,tests\*.cjs | ForEach-Object { node --check $_.FullName }
+node --test tests/ptb.test.cjs
+```
+
+Đã PASS 15 test Node.js: bảo toàn toàn bộ đầu ra ngoài filter bằng hash baseline,
+hai script RevenueCat/header không đổi byte, merge catalog/ID/nhóm, idempotence,
+chế độ observe, schema sai/rỗng/JSON hỏng, URL match và không match, giới hạn body,
+ẩn dữ liệu trong log, sanitizer HAR, PNG/layout và tải script từ server localhost.
+Kiểm thử dùng dữ liệu giả, không dùng token/ảnh thật và không gọi API Locket.
+Chưa kiểm thử parser module, MITM, UI/filter/API hay X trên iPhone/Shadowrocket.
+
+Rollback: tắt `MKC PTB Image Metadata (M1)` để dừng log. Chuyển RC sang
+`ptb-observe` để dừng chèn mới, hoặc tắt module base thử nghiệm và bật lại module
+trước đó. Đóng/mở Locket, chờ RC gốc fetch/activate lại; tắt module không xóa ngay
+config đã cache. Dừng server bằng Ctrl+C. Nếu CA chỉ cài cho thử nghiệm, có thể gỡ
+sau khi không còn cần các module MITM khác. Không xóa dữ liệu app hay reset tài khoản.
+
+Raw của nhánh feature:
+
+- https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/mkc.sgmodule
+- https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/feat/mikenco-ptb-mvp/mikencoPTB/modules/ptb_image_debug.module
+
+Không dùng Raw `main` để đại diện các thay đổi local này. Mọi script-path trong
+hai module thử đều trỏ nhánh feature; hai file RevenueCat/header giữ nguyên nội
+dung. Khi cập nhật phiên bản tiếp theo, push đầy đủ tài nguyên lên cùng nhánh
+và tăng build/query version nếu cần tải lại script đã cache.
+
+## Cảnh báo ngoài phạm vi
+
+`scripts/revenuecat.js` cũ có dữ liệu thuê bao/giao dịch hardcoded; lần này giữ nguyên
+theo ràng buộc, không bổ sung giả biên lai hay xác minh thanh toán. Các module khác
+trong repo có redirect/backend và hook quá rộng; không dùng chúng làm bằng chứng
+luồng gốc khi đang thu thập M1. Không sửa hàng loạt ngoài `mikencoPTB/`.

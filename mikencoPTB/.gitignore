@@ -1,0 +1,4 @@
+# Captures stay private and must never enter the repository.
+*.har
+captures/
+*.private.json

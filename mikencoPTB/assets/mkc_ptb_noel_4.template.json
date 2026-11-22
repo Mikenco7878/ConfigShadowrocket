@@ -1,0 +1,39 @@
+{
+  "schema_scope": "mkc-local-design-only-not-locket-remote-config",
+  "template_id": "mkc_ptb_noel_4",
+  "display_name": "Photobooth Noel (4 ô)",
+  "group_name": "Photobooth MKC 📸",
+  "status": "experimental-list-reference-client-resolution-unverified",
+  "thumbnail": {
+    "file": "mkc_ptb_noel_4.thumbnail.png",
+    "purpose": "local-preview-only",
+    "source": "Built-in imagegen edit of the user-supplied Christmas reference",
+    "transparent": false,
+    "locket_catalog_field": null
+  },
+  "layout": {
+    "status": "draft-rectangles-estimated-from-reference-not-an-alpha-mask",
+    "canvas": { "width": 1254, "height": 1254 },
+    "rows": 2,
+    "columns": 2,
+    "coordinate_origin": "top-left",
+    "coordinate_unit": "pixel",
+    "slot_order": "row-major",
+    "fit": "cover",
+    "slots": [
+      { "index": 0, "x": 144, "y": 224, "width": 460, "height": 410 },
+      { "index": 1, "x": 654, "y": 224, "width": 456, "height": 410 },
+      { "index": 2, "x": 144, "y": 688, "width": 460, "height": 462 },
+      { "index": 3, "x": 654, "y": 688, "width": 456, "height": 462 }
+    ]
+  },
+  "production_overlay": null,
+  "unverified": [
+    "Locket catalog definition fields for display name and thumbnail",
+    "Whether the app resolves an arbitrary filter ID",
+    "Whether one original photo or four separate captures are available",
+    "Original image transport and authenticated session field locations",
+    "Accepted response and image lifetime after closing preview",
+    "Pixel-accurate transparent overlay including decoration occlusion"
+  ]
+}
