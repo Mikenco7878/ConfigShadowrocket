@@ -4,6 +4,11 @@ Nhánh local: `feat/mikenco-ptb-mvp`. Ngày chuẩn bị: 2026-11-23 (UTC+7).
 Phát hành theo yêu cầu người dùng trên nhánh feature; không push vào `main`.
 Build module/script URL: `20261123_m0_m1_03`. Mọi file triển khai nằm trong `mikencoPTB/`.
 
+Quy ước bảo trì theo yêu cầu người dùng: mỗi lần sửa file `.sgmodule`, cập nhật
+header `# Updated: HH:mm:ss DD/MM/YYYY (UTC+7)` bằng thời điểm sửa thực tế theo
+múi giờ Asia/Bangkok. Giữ nguyên các directive `#!name`/`#!desc` và cập nhật mốc này
+kể cả khi chỉ sửa comment hoặc script-path.
+
 ## Trạng thái và bằng chứng
 
 | Hạng mục | Đã có | Chưa xác minh |
