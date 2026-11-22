@@ -1,18 +1,22 @@
 // Limit the existing handler to Locket; preserve traffic on unsupported inputs.
 (function () {
 var result = {};
+var diagnosticState = "failed:request_context";
 try {
 var headers = $request.headers || {};
 var userAgent = headers["User-Agent"] || headers["user-agent"] || "";
-if (/^Locket(?:\/|\s|$)/.test(userAgent)) {
+diagnosticState = userAgent ? "skipped:non_locket" : "skipped:user_agent_missing";
+if (userAgent.includes("Locket")) {
 // ========= ID ========= //
 const mapping = {
   "%E8%BD%A6%E7%A5%A8%E7%A5%A8": ["vip+watch_vip"],
   Locket: ["Gold"],
 };
 // ================== //
-var ua = $request.headers["User-Agent"] || $request.headers["user-agent"],
-  obj = JSON.parse($response.body);
+var ua = $request.headers["User-Agent"] || $request.headers["user-agent"];
+diagnosticState = "failed:json_parse";
+var obj = JSON.parse($response.body);
+diagnosticState = "failed:subscriber_schema";
 
 var mute = {
     auto_resume_date: null,
@@ -53,9 +57,17 @@ if (match) {
   ((obj.subscriber.subscriptions["locket_1600_1y"] = mute),
     (obj.subscriber.entitlements.pro = locketGold));
 result = { body: JSON.stringify(obj) };
+diagnosticState = "processed";
 }
 } catch (error) {
   // Preserve the original request or response on malformed input.
+}
+if (typeof $argument === "string" && $argument === "debug") {
+  try {
+    var statusValue = typeof $response !== "undefined" ? ($response.status || $response.statusCode || "") : "";
+    var statusMatch = String(statusValue).match(/\b[1-5][0-9]{2}\b/);
+    console.log("[MKC][revenuecat] " + diagnosticState + " status=" + (statusMatch ? statusMatch[0] : "unknown"));
+  } catch (error) {}
 }
 $done(result);
 })();

@@ -3,15 +3,20 @@
 // Updated: 10:56 11/11/2026 (UTC+7)
 (function () {
 var result = {};
+var diagnosticState = "failed:request_context";
 try {
 var ua = $request.headers["User-Agent"] || $request.headers["user-agent"] || "";
+diagnosticState = ua ? "skipped:non_locket" : "skipped:user_agent_missing";
 
 if (ua.includes("Locket")) {
+  diagnosticState = "failed:json_parse";
   var obj = JSON.parse($response.body);
+  diagnosticState = "skipped:unsupported_schema";
   if (!obj || typeof obj !== "object" || Array.isArray(obj) ||
       (obj.entries !== undefined && (!obj.entries || typeof obj.entries !== "object" || Array.isArray(obj.entries)))) {
     throw new Error("Unsupported Remote Config schema");
   }
+  diagnosticState = "failed:config_transform";
   obj.Attention = "Hi! Please do not sell or share this with others!";
   obj.entries = obj.entries || {};
   // 1. GOLD CONFIGURATION, FEATURE GATES & PAYWALL
@@ -524,9 +529,17 @@ if (ua.includes("Locket")) {
         ])
     });
   result = { body: JSON.stringify(obj) };
+  diagnosticState = "processed";
 }
 } catch (error) {
   // Preserve the original response when JSON or its schema is unsupported.
+}
+if (typeof $argument === "string" && $argument === "debug") {
+  try {
+    var statusValue = typeof $response !== "undefined" ? ($response.status || $response.statusCode || "") : "";
+    var statusMatch = String(statusValue).match(/\b[1-5][0-9]{2}\b/);
+    console.log("[MKC][locket_rc] " + diagnosticState + " status=" + (statusMatch ? statusMatch[0] : "unknown"));
+  } catch (error) {}
 }
 $done(result);
 })();
