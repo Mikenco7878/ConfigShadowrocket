@@ -1,0 +1,12 @@
+#!name=MKC Locket
+#!desc=Locket Remote Config and existing RevenueCat handlers for Shadowrocket
+# Author: Mikenco7878
+
+[Script]
+# RevenueCat handlers also check the Locket User-Agent inside each script.
+revenuecat = type=http-response,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,requires-body=true,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/mikenco/scripts/revenuecat.js?v=20261122_locket_only
+deleteHeader = type=http-request,pattern=^https:\/\/api\.revenuecat\.com\/v[1-9][0-9]*\/(?:receipts|subscribers\/[^/?#]+)(?:\?[^#]*)?$,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/mikenco/scripts/deleteHeader.js?v=20261122_locket_only
+locket_rc = type=http-response,pattern=^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\/[^?#]+(?:\?[^#]*)?$,requires-body=true,timeout=10,script-path=https://raw.githubusercontent.com/Mikenco7878/ConfigShadowrocket/main/mikenco/scripts/forceLocketGold.js?v=20261122_locket_only
+
+[MITM]
+hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com
